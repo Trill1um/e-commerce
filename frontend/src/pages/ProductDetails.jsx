@@ -65,7 +65,7 @@ const ProductDetails = () => {
     if (product?.images?.length > 0) {
       setCurrentImageIndex(0);
     }
-  }, [product?._id, product?.images]);
+  }, [product?.id, product?.images]);
 
   const nextImage = () => {
     if (product?.images?.length > 0) {
@@ -102,7 +102,7 @@ const ProductDetails = () => {
 
     try {
       await rateMutation.mutateAsync({
-        productId: product._id,
+        productId: product.id,
         rating: userRating,
       });
       toast.success(`Rated ${userRating} stars! 🐝`);
@@ -121,7 +121,7 @@ const ProductDetails = () => {
     }
 
     // Check if user is trying to rate their own product
-    if (user._id === product?.sellerId?._id) {
+    if (user.id === product?.sellerId?.id) {
       toast.error("You cannot rate your own product");
       return;
     }
@@ -358,14 +358,14 @@ const ProductDetails = () => {
                       Sign in to rate this product
                     </p>
                   )}
-                  {user && user._id === product?.sellerId?._id && (
+                  {user && user.id === product?.sellerId?.id && (
                     <p className="text-sm text-amber-600">
                       You can't rate your own product
                     </p>
                   )}
                   
                   {/* Show rating controls when expanded and user can rate */}
-                  {isRatingExpanded && user && user._id !== product?.sellerId?._id && (
+                  {isRatingExpanded && user && user.id !== product?.sellerId?.id && (
                     <div className="flex flex-col gap-2 mt-2">
                       {userRating > 0 && (
                         <div className="flex gap-2 items-center">

@@ -36,7 +36,7 @@ const AdditionalInfoSection = React.memo(
             type="text"
             placeholder="Enter Title Here"
             value={section.title}
-            onChange={(e) => onUpdate(section._id, "title", e.target.value)}
+            onChange={(e) => onUpdate(section.id, "title", e.target.value)}
             className="input w-full px-8 py-4 rounded-[15px] bee-body-text-desktop"
           />
         </div>
@@ -47,7 +47,7 @@ const AdditionalInfoSection = React.memo(
             rows="3"
             value={section.description}
             onChange={(e) =>
-              onUpdate(section._id, "description", e.target.value)
+              onUpdate(section.id, "description", e.target.value)
             }
             className="input w-full px-8 py-4 rounded-[15px] bee-body-text-desktop resize-vertical min-h-32 scrollbar-hide"
           />
@@ -55,7 +55,7 @@ const AdditionalInfoSection = React.memo(
       </div>
       {/* Remove Button - Only visible on hover*/}
       <button
-        onClick={() => onRemove(section._id)}
+        onClick={() => onRemove(section.id)}
         className="btn-anim absolute top-4 right-4 w-8 h-8 rounded-full bg-secondary text-white lg:opacity-0 lg:group-hover/card:opacity-100 transform scale-75 group-hover/card:scale-100 flex items-center justify-center transition-all duration-300"
         title="Remove Section"
       >
@@ -379,7 +379,7 @@ const CreationPage = ({user}) => {
       if (!product) {
         await createProductAsync(formData);
       } else {
-        await updateProductAsync ({ productId: formData._id, productData: formData });
+        await updateProductAsync ({ productId: formData.id, productData: formData });
       }
       toast.success("Product created successfully!");
 
@@ -405,7 +405,7 @@ const CreationPage = ({user}) => {
   // Add new additional section
   const addAdditionalSection = () => {
     const newSection = {
-      _id: Date.now(), // Simple unique ID
+      id: Date.now(), // Simple unique ID
       title: "",
       description: "",
     };
@@ -420,7 +420,7 @@ const CreationPage = ({user}) => {
     setFormData((prev) => ({
       ...prev,
       additionalInfo: prev.additionalInfo.filter(
-        (section) => section._id !== sectionId
+        (section) => section.id !== sectionId
       ),
     }));
   };
@@ -430,7 +430,7 @@ const CreationPage = ({user}) => {
     setFormData((prev) => ({
       ...prev,
       additionalInfo: prev.additionalInfo.map((section) =>
-        section._id === sectionId ? { ...section, [field]: value } : section
+        section.id === sectionId ? { ...section, [field]: value } : section
       ),
     }));
   };
@@ -834,7 +834,7 @@ const CreationPage = ({user}) => {
                 {/* Additional Info Sections */}
                 {formData.additionalInfo.map((section, index) => (
                   <AdditionalInfoSection
-                    key={section._id}
+                    key={section.id}
                     section={section}
                     index={index}
                     onUpdate={updateAdditionalSection}

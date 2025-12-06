@@ -405,7 +405,7 @@ const ProductGrid = ({ products }) => {
   const { isLoading } = useProcessedProducts((state) => state.isLoading);
   // const isLoading=true;
   products = isLoading
-    ? Array.from({ length: 6, _id: "placeholder-" + Date.now() })
+    ? Array.from({ length: 6, id: "placeholder-" + Date.now() })
     : products;
   return (
     <>
@@ -413,7 +413,7 @@ const ProductGrid = ({ products }) => {
         <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
           {products.map((product, i) => (
             <div
-              key={"product_card-" + product?._id + "-" + i}
+              key={"product_card-" + product?.id + "-" + i}
               className="will-change-transform group bg-amber-400 rounded-[1.5rem]"
             >
               {isLoading ? (

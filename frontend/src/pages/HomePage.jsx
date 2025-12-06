@@ -63,9 +63,9 @@ function ScrollingCarousel({ className = "", products, location }) {
           {seamlessProducts.map((p, i) => (
             <div
               onClick={() => {
-                onNav(p._id);
+                onNav(p.id);
               }}
-              key={`carousel-${p._id}-${i}`}
+              key={`carousel-${p.id}-${i}`}
               className={`bg-center bg-cover hover:brightness-90 bg-no-repeat h-full w-[292px] shrink-0 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 cursor-pointer`}
               style={{
                 backgroundImage: `url(${cloudify(
@@ -138,7 +138,7 @@ const HoneyCell = ({ className = "", product = [], location = "" }) => {
             </div>
             <button
               onClick={() => {
-                navigate(`/product/${product?._id}`, {
+                navigate(`/product/${product?.id}`, {
                   state: { from: location },
                 });
               }}
@@ -318,7 +318,7 @@ const HomePage = () => {
           {Array.from({ length: 6 }, (_, index) => {
             return (
               <HoneyCell
-                key={`honey-cell-${featuredProducts[index]?._id || index}`}
+                key={`honey-cell-${featuredProducts[index]?.id || index}`}
                 className={coordinates[index]}
                 product={featuredProducts[index] || null}
                 location={location}

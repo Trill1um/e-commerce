@@ -2,10 +2,10 @@ import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import sequelize from "./lib/sequelize.js";
 
 import authRoutes from "./routes/auth.route.js";
 import productRoutes from "./routes/product.route.js";
-import { connectDB } from "./lib/db.js";
 
 dotenv.config();
 
@@ -35,11 +35,18 @@ app.use((req, res, next) => {
   next();
 });
 
+sequelize.sync({alter: true})
+  .then(() => {
+    console.log("Database & tables synced!");
+  })
+  .catch((err) => {
+    console.error("Error syncing database: ", err);
+  });
+
 // Connect Routes - AFTER all middleware
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 
 app.listen(PORT, () => {
-  // console.log("Server is running on port ", PORT);
-  connectDB();
+  console.log("Server is running on port ", PORT);
 });

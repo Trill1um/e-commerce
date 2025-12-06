@@ -131,7 +131,7 @@ export const verifyCode = async (code, userEmail) => {
     // Clean up on error
     if (user) {
       try {
-        await tempUser.deleteOne({ _id: user._id });
+        await tempUser.deleteOne({ id: user.id });
       } catch (cleanupError) {
         console.error("Error cleaning up temp user:", cleanupError.message);
       }

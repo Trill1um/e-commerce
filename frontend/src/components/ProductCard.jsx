@@ -25,7 +25,7 @@ const ProductCard = ({ product, isPreview = false }) => {
   };
   const onViewDetails = () => {
     if (!isPreview) {
-      navigate(`/product/${product._id ? product._id : "preview"}`);
+      navigate(`/product/${product.id ? product.id : "preview"}`);
     }
   };
 

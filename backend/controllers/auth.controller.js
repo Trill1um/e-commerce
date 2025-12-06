@@ -1,5 +1,6 @@
 import { client } from "../lib/redis.js";
-import { User, tempUser } from "../models/User.js";
+import User from "../models/User.js";
+import TempUser from "../models/TempUser.js";
 import jwt from "jsonwebtoken";
 import {
   sendVerificationEmail,
@@ -74,7 +75,7 @@ export const login = async (req, res) => {
     }
 
     // Check credentials
-    const user = await User.findOne({ email });
+    const user = await User.findByEmail(email);
     const isValidPassword = await user?.comparePassword(password);
     if (!user || !isValidPassword) {
       // console.log("Invalid login attempt for email:", email, isValidPassword);
@@ -82,18 +83,26 @@ export const login = async (req, res) => {
     }
 
     // Generate tokens
-    const accessToken = genSetAccessToken(res, user._id);
-    const refreshToken = genSetRefreshToken(res, user._id);
+    const accessToken = genSetAccessToken(res, user.id);
+    const refreshToken = genSetRefreshToken(res, user.id);
 
     // Store refresh token
-    await storeRefreshToken(user._id, refreshToken);
+    await storeRefreshToken(user.id, refreshToken);
 
     // Clean up temp and cooldown tokens
     await client.del(`verify_cooldown:${email}`);
 
     // console.log("User authenticated successfully:", user);
     return res.status(200).json({
-      user,
+      user: {
+        id: user.id,
+        colonyName: user.colony_name,
+        email: user.email,
+        role: user.role,
+        facebookLink: user.facebook_link,
+        createdAt: user.created_at,
+        updatedAt: user.updated_at
+      },
       message: "Login successful",
     });
   } catch (error) {
@@ -166,21 +175,21 @@ export const signup = async (req, res) => {
     }
 
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findByEmail(email);
     if (existingUser) {
       return res.status(409).json({ message: "Email already registered" });
     }
 
     // Check if there's a pending verification
-    const pendingVerification = await tempUser.findOne({ email });
+    const pendingVerification = await TempUser.findByEmail(email);
     if (pendingVerification) {
       return res.status(409).json({ message: "Pending verification already exists for this email" });
     }
 
-    let user;
+    let userData;
 
     if (role==="seller") {
-      user = {
+      userData = {
         colonyName,
         email,
         password,
@@ -188,21 +197,21 @@ export const signup = async (req, res) => {
         facebookLink: location,
       };
     } else {
-      user = {
+      userData = {
         email,
         password,
         role,
       }
     }
-    // Create temp user data
+    // Create temp userData data
     try {
-      await tempUser.create(user);
+      await TempUser.create(userData);
     } catch (error) {
       console.error("Error creating temp user:", error);
       throw error;
     }
 
-    await client.set(`verifying:${user.email}`, "true", "EX", 60 * 20); // 20 minutes
+    await client.set(`verifying:${email}`, "true", "EX", 60 * 20); // 20 minutes
     console.log("Finished creating temp user, proceed to send verification email");
     res.status(201).json({ message: "User created, please verify your email" });
   } catch (error) {
@@ -277,11 +286,11 @@ export const verifyReceive = async (req, res) => {
     await client.del(`verify_cooldown:${email}`);
 
     // Generate tokens~
-    const accessToken = genSetAccessToken(res, user._id);
-    const refreshToken = genSetRefreshToken(res, user._id);
+    const accessToken = genSetAccessToken(res, user.id);
+    const refreshToken = genSetRefreshToken(res, user.id);
 
     // Store refresh token
-    await storeRefreshToken(user._id, refreshToken);
+    await storeRefreshToken(user.id, refreshToken);
 
     // Clean up temp and cooldown tokens
 

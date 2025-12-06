@@ -272,7 +272,7 @@ export function useUniqueProductCategories() {
 export function useProductById(productId) {
   const { rawProducts, isLoading, error } = useProcessedProducts();
   if (!productId) return {product:null};
-  const product = rawProducts.find(p => p._id === productId);
+  const product = rawProducts.find(p => p.id === productId);
   
   return {
     product,
@@ -286,7 +286,7 @@ export function useUserProducts(sellerId) {
   
   // Filter products by seller
   const sellerProducts = rawProducts.filter(p => 
-    p?.sellerId?._id === sellerId
+    p?.sellerId?.id === sellerId
   );
   
   return {

@@ -32,12 +32,12 @@ const SellerProducts = ({ user }) => {
     Other: <OtherIcon className="text-amber-600 stroke-current w-5 h-5" />,
   };
 
-  const { sellerProducts, isLoading, error } = useUserProducts(user?._id);
+  const { sellerProducts, isLoading, error } = useUserProducts(user?.id);
   const { deleteProductAsync, isDeleting, isCreating } = useProcessedProducts();
 
   // Update local products when filtered products change
   const handleEdit = (product) => {
-    navigate(`/myProduct/editing-${product?._id}`);
+    navigate(`/myProduct/editing-${product?.id}`);
   };
 
   // Bee-themed confirmation overlay state
@@ -163,7 +163,7 @@ const SellerProducts = ({ user }) => {
               <tbody className="divide-y divide-amber-100">
                 {sellerProducts.map((product, index) => (
                   <tr
-                    key={product?._id}
+                    key={product?.id}
                     className={`hover:bg-amber-50/50 transition-colors duration-150 ${
                       index % 2 === 0 ? "bg-white/50" : "bg-amber-25/25"
                     }`}
@@ -266,7 +266,7 @@ const SellerProducts = ({ user }) => {
                           <span className="text-sm">{ICONS.edit}</span>
                         </button>
                         <button
-                          onClick={() => handleDelete(product?._id)}
+                          onClick={() => handleDelete(product?.id)}
                           className="p-1 btn-anim text-red-600 hover:text-red-800 hover:bg-red-100 rounded-md transition-colors duration-200"
                           title="Delete product"
                         >
@@ -297,7 +297,7 @@ const SellerProducts = ({ user }) => {
         <div className="md:hidden space-y-3">
           {sellerProducts.map((product, index) => (
             <div
-              key={product?._id || product?.id || index}
+              key={product?.id || product?.id || index}
               className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-amber-200 p-4"
             >
               <div className="flex items-start gap-3">
@@ -365,7 +365,7 @@ const SellerProducts = ({ user }) => {
                         Edit
                       </button>
                       <button
-                        onClick={() => handleDelete(product?._id)}
+                        onClick={() => handleDelete(product?.id)}
                         className="btn-anim px-3 py-1.5 text-xs border border-red-300 rounded-xl text-red-700 hover:bg-red-500 hover:text-white transition-colors"
                       >
                         Delete
@@ -380,7 +380,7 @@ const SellerProducts = ({ user }) => {
                       Edit
                     </button>
                     <button
-                      onClick={() => handleDelete(product?._id)}
+                      onClick={() => handleDelete(product?.id)}
                       className="btn-anim flex-1 px-3 py-2 text-sm border border-red-300 rounded-xl text-red-700 hover:bg-red-500 hover:text-white transition-colors"
                     >
                       Delete

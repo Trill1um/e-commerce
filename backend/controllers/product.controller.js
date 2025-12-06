@@ -32,7 +32,7 @@ export const getAllProducts = async (req, res) => {
     if (req.user) {
       // Get all user's ratings for these products
       const userRatings = await P_S.find({ 
-        userId: req.user._id,
+        userId: req.user.id,
       });
       // console.log("User ratings found:", userRatings);
 
@@ -40,7 +40,7 @@ export const getAllProducts = async (req, res) => {
 
       productsWithRatingFlag = products.map(product => ({
         ...product.toObject(),
-        userRated: ratedProductIds.has(product._id.toString())
+        userRated: ratedProductIds.has(product.id.toString())
       }));
     } else {
       productsWithRatingFlag = products.map(product => ({
@@ -80,7 +80,7 @@ export const createMyProduct = async (req, res) => {
     let cloudinaryResponses = [];
     
     additionalInfo.forEach(element => {
-      delete element._id;
+      delete element.id;
     });
 
     // Handle image upload
@@ -159,7 +159,7 @@ export const updateMyProduct = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    if (product.sellerId._id.toString() !== req.user.id) {
+    if (product.sellerId.id.toString() !== req.user.id) {
       return res
         .status(403)
         .json({ message: "You are not authorized to update this product" });
@@ -174,7 +174,7 @@ export const updateMyProduct = async (req, res) => {
         if (product.images && product.images.length > 0) {
           const deletePromises = product.images.map(async (imageUrl) => {
             try {
-              // Extract public_id from Cloudinary URL
+              // Extract publicid from Cloudinary URL
               const publicId = imageUrl.split("/").pop().split(".")[0];
               const fullPublicId = `products/${publicId}`;
               await cloudinary.uploader.destroy(fullPublicId);
@@ -240,7 +240,7 @@ export const updateMyProduct = async (req, res) => {
 export const deleteMyProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-    if (req.user.id != product.sellerId._id) {
+    if (req.user.id != product.sellerId.id) {
       return res
         .status(403)
         .json({ message: "You weeeeehjh are not authorized to delete this product" });
@@ -289,18 +289,18 @@ export const rateProduct = async(req, res) => {
     }
     
     // Check if product exists
-    const product = await Product.findOne({ _id: productId });
+    const product = await Product.findOne({ id: productId });
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
 
     // Prevent sellers from rating their own products
-    if (user?._id.toString() === product?.sellerId?._id.toString()) {
+    if (user?.id.toString() === product?.sellerId?.id.toString()) {
       return res.status(400).json({ message: "Sellers cannot rate their own products" });
     }
     
     const rate_result = await P_S.findOneAndUpdate(
-      { productId: productId, userId: user._id },
+      { productId: productId, userId: user.id },
       { $set: { rating: rating } },
       { new: false, upsert: true, runValidators: true, includeResultMetadata: true }
     );
@@ -339,7 +339,7 @@ export const deleteRating = async (req, res) => {
 
     const deletedRating = await P_S.findOneAndDelete({
       productId,
-      userId: user._id,
+      userId: user.id,
     });
 
     if (!deletedRating) {
