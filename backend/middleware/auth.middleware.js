@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { User } from "../models/User.js";
+import User from "../models/User.js";
 
 export const protectRoute = async (req, res, next) => {
   try {
@@ -12,11 +12,14 @@ export const protectRoute = async (req, res, next) => {
 
     try {
       const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-      const user = await User.findById(decoded.userId).select("-password");
+      const user = await User.findById(decoded.userId);
       if (!user) {
         return res.status(401).json({ message: "User not found" });
       }
 
+      // Remove password from user object
+      delete user.password;
+      
       req.user = user; // Attach user to request object for further use
       next();
     } catch (error) {
@@ -45,23 +48,24 @@ export const sellerRoute = async (req, res, next) => {
   }
 };
 
-export const buyerRoute = async (req, res, next) => {
-  try {
-    // console.log("Buyer route accessed by user:", req.user?.colonyName);
-    const token = req.cookies.accessToken;
-    if (!token) {
-      throw new Error("No Access Token Provided");
-    }
-    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-    const user = await User.findById(decoded.userId).select("-password");
-    if (!user) {
-      throw new Error("User not found");
-    }
-    req.user = user; // Attach user to request object for further use
-    next();
-  } catch (error) {
-    console.error("Error in protectRoute middleware:", error);
-    req.user = null;
-    next();
-  }
-};
+// export const buyerRoute = async (req, res, next) => {
+//   try {
+//     // console.log("Buyer route accessed by user:", req.user?.colonyName);
+//     const token = req.cookies.accessToken;
+//     if (!token) {
+//       throw new Error("No Access Token Provided");
+//     }
+//     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+//     const user = await User.findByIdNoPassword(decoded.userId);
+//     console.log("Buyer route user:", user);
+//     if (!user) {
+//       throw new Error("User not found");
+//     }
+//     req.user = user; // Attach user to request object for further use
+//     next();
+//   } catch (error) {
+//     console.error("Error in protectRoute middleware:", error);
+//     req.user = null;
+//     next();
+//   }
+// };

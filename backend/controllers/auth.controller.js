@@ -1,11 +1,6 @@
 import { client } from "../lib/redis.js";
 import User from "../models/User.js";
-import TempUser from "../models/TempUser.js";
 import jwt from "jsonwebtoken";
-import {
-  sendVerificationEmail,
-  verifyCode,
-} from "../services/verifyEmail.js";
 import dotenv from "dotenv";
 import fetch from "node-fetch";
 
@@ -76,8 +71,12 @@ export const login = async (req, res) => {
 
     // Check credentials
     const user = await User.findByEmail(email);
-    const isValidPassword = await user?.comparePassword(password);
-    if (!user || !isValidPassword) {
+    if (!user) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+    
+    const isValidPassword = await User.comparePassword(password, user.password);
+    if (!isValidPassword) {
       // console.log("Invalid login attempt for email:", email, isValidPassword);
       return res.status(401).json({ message: "Invalid email or password" });
     }
@@ -99,8 +98,7 @@ export const login = async (req, res) => {
         colonyName: user.colony_name,
         email: user.email,
         role: user.role,
-        facebookLink: user.facebook_link,
-        createdAt: user.created_at,
+        created_at: user.created_at,
         updatedAt: user.updated_at
       },
       message: "Login successful",
@@ -112,13 +110,16 @@ export const login = async (req, res) => {
 };
 
 export const signup = async (req, res) => {
-  const { colonyName, email, password, facebookLink, confirmPassword, role } =
+  const { colonyName, email, password, confirmPassword, role } =
     req.body;
   try {
     console.log("ChecK: ", req.body)
     // Validate input
     if (!email || !password) {
       return res.status(400).json({ message: "Missing credentials detected" });
+    }
+    if (!email.includes("@")) {
+      return res.status(400).json({ message: "Please enter a valid email" });
     }
     if (password !== confirmPassword) {
       return res.status(400).json({ message: "Passwords do not match" });
@@ -128,62 +129,16 @@ export const signup = async (req, res) => {
         .status(400)
         .json({ message: "Password must be at least 6 characters" });
     }
-    let location=facebookLink;
     if (role==="seller") {
       if (!colonyName) {
         return res.status(400).json({ message: "Colony name is required for sellers" });
       }
-      if (!facebookLink || facebookLink.trim() === "") {
-        return res.status(400).json({
-          message:
-            "Facebook link is required - buyers need a way to contact you!",
-        });
-      }
-      if (!facebookLink.includes("www.facebook.com/")) {
-        return res.status(400).json({
-          message: "Please enter a valid Facebook link (www.facebook.com/your.username)",
-        });
-      }
-
-      // get final redirected facebook link if it's a /share/ link
-      console.log("Original Facebook link: ", location);
-      if (location.includes("/share/")) {
-        const resp = await fetch(location, { redirect: "manual" });
-        if (resp.status >= 300 && resp.status < 400) {
-          location = resp.headers.get("location");
-          // console.log("Redirected to: ", location);
-        }
-      }
-
-      location = (() => {
-          const start = location.indexOf("www.facebook.com/") + 17;
-          const endQ = location.indexOf("?", start);
-          if (endQ===-1) {
-            return location.slice(start);
-          }
-          let base = location.slice(start, endQ);
-          const query = location.slice(endQ + 1);
-          const params = new URLSearchParams(query);
-          const id = params.get("id");
-          if (id) {
-            base += `?id=${id}`;
-          }
-          return base;
-      })();
-
-      console.log("Final Facebook link after redirects: ", location);
     }
 
     // Check if user already exists
     const existingUser = await User.findByEmail(email);
     if (existingUser) {
       return res.status(409).json({ message: "Email already registered" });
-    }
-
-    // Check if there's a pending verification
-    const pendingVerification = await TempUser.findByEmail(email);
-    if (pendingVerification) {
-      return res.status(409).json({ message: "Pending verification already exists for this email" });
     }
 
     let userData;
@@ -194,7 +149,6 @@ export const signup = async (req, res) => {
         email,
         password,
         role,
-        facebookLink: location,
       };
     } else {
       userData = {
@@ -203,17 +157,22 @@ export const signup = async (req, res) => {
         role,
       }
     }
-    // Create temp userData data
-    try {
-      await TempUser.create(userData);
-    } catch (error) {
-      console.error("Error creating temp user:", error);
-      throw error;
-    }
 
-    await client.set(`verifying:${email}`, "true", "EX", 60 * 20); // 20 minutes
-    console.log("Finished creating temp user, proceed to send verification email");
-    res.status(201).json({ message: "User created, please verify your email" });
+    let userID;
+    try {
+      userID = await User.create(userData);
+    } catch (error) {
+      console.error("Error creating user:", error);
+      return res.status(500).json({ message: "Failed to create user" });
+    }
+    
+    const accessToken = genSetAccessToken(res, userID);
+    const refreshToken = genSetRefreshToken(res, userID);
+
+    // Store refresh token
+    await storeRefreshToken(userID, refreshToken);
+    
+    res.status(201).json({ message: "User created successfully" });
   } catch (error) {
     console.error("Error creating user:", error);
     return res.status(500).json({error: error ,message: "Internal server error" });
@@ -240,105 +199,6 @@ export const logout = async (req, res) => {
   } catch (error) {
     console.error("Error logging out:", error);
     res.status(500).json({ message: "Internal server error" });
-  }
-};
-
-export const verifyReceive = async (req, res) => {
-  try {
-    const { code, email } = req.body;
-    if (!code || !email) {
-      return res.status(400).json({ message: "Code and email are required" });
-    }
-
-    // Verify token
-    const isValid = await verifyCode(code, email);
-
-    if (!isValid?.success) {
-      return res
-        .status(410)
-        .json({ message: isValid.message || "Invalid or expired Verification URL" });
-    }
-
-    // Check if user already exists
-    const check = await User.findOne({ email });
-    if (check) {
-      return res.status(404).json({ message: "User already exists found" });
-    }
-
-    // Check for Pending Verification
-    const temp = await tempUser.findOne({ email });
-    if (!temp) {
-      return res.status(404).json({ message: "No pending verification found for this email." });
-    }
-
-    // Create Verified User
-    const user = await User.create({
-      colonyName: temp.colonyName,
-      email: temp.email,
-      password: temp.password,
-      role: temp.role,
-      facebookLink: temp.facebookLink,
-    });
-
-    //Delete Temp User and verifying flag
-    await tempUser.deleteOne({ email });
-    await client.del(`verifying:${email}`);
-    await client.del(`verify_cooldown:${email}`);
-
-    // Generate tokens~
-    const accessToken = genSetAccessToken(res, user.id);
-    const refreshToken = genSetRefreshToken(res, user.id);
-
-    // Store refresh token
-    await storeRefreshToken(user.id, refreshToken);
-
-    // Clean up temp and cooldown tokens
-
-    // console.log("Finish verifying successful");
-    return res.status(200).json({ message: "Email verification successful" });
-  } catch (error) {
-    return res.status(500).json({ message: error.response?.data.message || "Internal server error" });
-  }
-};
-
-export const verifySend = async (req, res) => {
-  try {
-    const { userEmail } = req.body;
-    if (!userEmail) {
-      return res.status(400).json({ message: "Email is required" });
-    }
-    const response = await sendVerificationEmail(userEmail);
-    if (!response.success) {
-      console.error("Error sending verification email:", response.error);
-      return res.status(400).json({ message: response.message || "Failed to send verification email" });
-    }
-    return res.status(200).json({ message: "Verification email sent" });
-  } catch (error) {
-    return res
-      .status(500)
-      .json({ message: error?.message || "Internal server error" });
-  }
-};
-
-export const cancelVerification = async (req, res) => {
-  try {
-    // console.log("Cancelation started")
-    const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ message: "Email is required" });
-    }
-
-    // Delete redis keys related to verification
-    await client.del(`verifying:${email}`);
-    await client.del(`verify_cooldown:${email}`);
-
-    // Remove temp user document
-    await tempUser.deleteOne({ email });
-
-    return res.status(200).json({ message: "Verification cancelled" });
-  } catch (error) {
-    console.error("Error cancelling verification:", error);
-    return res.status(500).json({ message: "Internal server error" });
   }
 };
 
@@ -372,7 +232,16 @@ export const refreshToken = async (req, res) => {
 export const getProfile = async (req, res) => {
   try {
     // console.log("getProfile route activated");
-    res.json(req.user);
+    let user=req.user;
+    res.status(200).json({
+      id: user.id,
+      colonyName: user.colony_name,
+      email: user.email,
+      role: user.role,
+      created_at: user.created_at,
+      updatedAt: user.updated_at
+    });
+    
   } catch (error) {
     console.error("Error getting profile:", error);
     res.status(500).json({ message: "Internal server error" });

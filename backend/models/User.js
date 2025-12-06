@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import pool from '../database.js';
+import pool from '../lib/db.js';
 
 class User {
   
@@ -9,16 +9,13 @@ class User {
       if (!data.colonyName || data.colonyName.trim().length < 2 || data.colonyName.trim().length > 50) {
         throw new Error('Colony name is required for sellers (2-50 characters)');
       }
-      if (!data.facebookLink || !data.facebookLink.trim()) {
-        throw new Error('Facebook link is required for sellers');
-      }
     }
   }
   
   // Create user with hashed password
-  static async create({ colonyName, email, password, facebookLink, role = 'buyer', code }) {
+  static async create({ colonyName, email, password, role = 'buyer', code }) {
     // Validate
-    this.validateSellerFields({ colonyName, facebookLink, role });
+    this.validateSellerFields({ colonyName, role });
     
     if (!email.match(/.+\@.+\..+/)) {
       throw new Error('Invalid email format');
@@ -35,8 +32,8 @@ class User {
     }
     
     const [result] = await pool.execute(
-      'INSERT INTO users (colony_name, email, password, facebook_link, role, code) VALUES (?, ?, ?, ?, ?, ?)',
-      [colonyName || null, email.trim(), hashedPassword, facebookLink || null, role, code || null]
+      'INSERT INTO users (colony_name, email, password, role, code) VALUES (?, ?, ?, ?, ?)',
+      [colonyName || null, email.trim(), hashedPassword, role, code || null]
     );
     
     return result.insertId;
@@ -55,6 +52,14 @@ class User {
   static async findById(id) {
     const [rows] = await pool.execute(
       'SELECT * FROM users WHERE id = ?',
+      [id]
+    );
+    return rows[0];
+  }
+
+  static async findByIdNoPassword(id) {
+    const [rows] = await pool.execute(
+      'SELECT id, colony_name, email, role, code, created_at, updated_at FROM users WHERE id = ?',
       [id]
     );
     return rows[0];
@@ -91,7 +96,6 @@ class User {
     if (data.role === 'seller') {
       this.validateSellerFields({
         colonyName: data.colonyName || currentUser.colony_name,
-        facebookLink: data.facebookLink || currentUser.facebook_link,
         role: 'seller'
       });
     }
@@ -117,10 +121,6 @@ class User {
     if (data.password !== undefined) {
       updates.push('password = ?');
       values.push(data.password);
-    }
-    if (data.facebookLink !== undefined) {
-      updates.push('facebook_link = ?');
-      values.push(data.facebookLink);
     }
     if (data.role !== undefined) {
       updates.push('role = ?');

@@ -2,7 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import sequelize from "./lib/sequelize.js";
+import pool from "./lib/db.js";
 
 import authRoutes from "./routes/auth.route.js";
 import productRoutes from "./routes/product.route.js";
@@ -15,9 +15,7 @@ const PORT = process.env.PORT || 3000;
 // CORS configuration - MUST be before routes
 app.use(
   cors({
-    origin:
-      process.env.FRONTEND_PRODUCTION_URL ||
-      process.env.FRONTEND_DEVELOPMENT_URL,
+    origin: true,
     credentials: true, // Allow cookies
   })
 );
@@ -31,17 +29,9 @@ app.use(cookieParser());
 
 // Debug middleware to log all requests
 app.use((req, res, next) => {
-  // console.log(`🚀 ${req.method} ${req.url}`);
+  console.log(`🚀 ${req.method} ${req.url}`);
   next();
 });
-
-sequelize.sync({alter: true})
-  .then(() => {
-    console.log("Database & tables synced!");
-  })
-  .catch((err) => {
-    console.error("Error syncing database: ", err);
-  });
 
 // Connect Routes - AFTER all middleware
 app.use("/api/auth", authRoutes);

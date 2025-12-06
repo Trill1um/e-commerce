@@ -1,17 +1,18 @@
 import Product from "../models/Products.js";
-import P_S from "../models/P_S.js";
+import Rating from "../models/Rating.js";
 import cloudinary from "../lib/cloudinary.js";
 
-// Function to get all products
+// Function to get a single product by ID
 export const getProduct = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id).populate(
-      "sellerId",
-      "colonyName facebookLink"
-    );
+    const product = await Product.findById(req.params.id);
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
+    
+    // Get seller information
+    product.seller = Product.findById(product.seller_id);
+    
     res.status(200).json({ product, message: "Product fetched successfully" });
   } catch (error) {
     console.error("Error fetching product:", error);
@@ -21,30 +22,33 @@ export const getProduct = async (req, res) => {
 
 export const getAllProducts = async (req, res) => {
   try {
-    // console.log("Fetching all products. Authenticated user:", req?.user?.colonyName || "None");  
-    const products = await Product.find({}).populate(
-      "sellerId",
-      "colonyName facebookLink"
-    );
+    let params=req.body.params||{};
+    console.log("Received params for getAllProducts:", params);
+    let filters={
+      category: params.category,
+      isLimited: params.isLimited,
+      inStock: params.inStock,
+    }
+    // console.log("BODY: ", req.body.params);
+    const products = await Product.findAll({filters, sortBy: params.sortBy, isDescending: params.isDescending});
 
     // If user is authenticated, check which products they've rated
     let productsWithRatingFlag = products;
     if (req.user) {
       // Get all user's ratings for these products
-      const userRatings = await P_S.find({ 
+      const userRatings = await Rating.find({ 
         userId: req.user.id,
       });
-      // console.log("User ratings found:", userRatings);
 
-      const ratedProductIds = new Set(userRatings.map(rating => rating.productId.toString()));
+      const ratedProductIds = new Set(userRatings.map(rating => rating.productId));
 
       productsWithRatingFlag = products.map(product => ({
-        ...product.toObject(),
-        userRated: ratedProductIds.has(product.id.toString())
+        ...product,
+        userRated: ratedProductIds.has(product.id)
       }));
     } else {
       productsWithRatingFlag = products.map(product => ({
-        ...product.toObject(),
+        ...product,
         userRated: false
       }));
     }
@@ -56,7 +60,7 @@ export const getAllProducts = async (req, res) => {
     console.error("Error fetching products:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
-};
+}; 
 
 export const createMyProduct = async (req, res) => {
   try {
@@ -119,10 +123,9 @@ export const createMyProduct = async (req, res) => {
 
 export const getMyProducts = async (req, res) => {
   try {
-    const products = await Product.find({ sellerId: req.user.id }).populate(
-      "sellerId",
-      "colonyName"
-    );
+    console.log("Fetching products for seller ID:", req.user.id);
+    const products = await Product.findAll({ filters:{sellerId: req.user.id} });
+    
     if (!products || products.length === 0) {
       return res
         .status(404)
@@ -150,16 +153,13 @@ export const updateMyProduct = async (req, res) => {
       additionalInfo,
       imageChanged,
     } = req.body;
-    const product = await Product.findById(req.params.id).populate(
-      "sellerId",
-      "colonyName"
-    );
+    const product = await Product.findById(req.params.id);
 
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    if (product.sellerId.id.toString() !== req.user.id) {
+    if (product.seller_id !== req.user.id) {
       return res
         .status(403)
         .json({ message: "You are not authorized to update this product" });
@@ -176,7 +176,7 @@ export const updateMyProduct = async (req, res) => {
             try {
               // Extract publicid from Cloudinary URL
               const publicId = imageUrl.split("/").pop().split(".")[0];
-              const fullPublicId = `products/${publicId}`;
+              const fullPublicId = `bee-products/${publicId}`;
               await cloudinary.uploader.destroy(fullPublicId);
             } catch (deleteError) {
               console.warn(`Failed to delete image: ${imageUrl}`, deleteError);
@@ -191,7 +191,7 @@ export const updateMyProduct = async (req, res) => {
           cloudinary.uploader.upload(
             typeof image == "object" ? image.base64 : image,
             {
-              folder: "products",
+              folder: "bee-products",
               resource_type: "auto", // Handles different file types
             }
           )
@@ -216,19 +216,21 @@ export const updateMyProduct = async (req, res) => {
     }
 
     // Update product fields
-    product.name = name;
-    product.description = description;
-    product.price = price;
-    product.category = category;
-    product.isLimited = isLimited;
-    product.inStock = inStock;
-    product.images = updatedImages;
-    product.additionalInfo = additionalInfo;
+    await Product.update(req.params.id, {
+      name,
+      description,
+      price,
+      category,
+      isLimited,
+      inStock,
+      images: updatedImages,
+      additionalInfo
+    });
 
-    await product.save();
+    const updatedProduct = await Product.findById(req.params.id);
 
     res.status(200).json({
-      product,
+      product: updatedProduct,
       message: "Product updated successfully",
     });
   } catch (error) {
@@ -240,14 +242,15 @@ export const updateMyProduct = async (req, res) => {
 export const deleteMyProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-    if (req.user.id != product.sellerId.id) {
-      return res
-        .status(403)
-        .json({ message: "You weeeeehjh are not authorized to delete this product" });
-    }
-
+    
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
+    }
+    
+    if (req.user.id != product.seller_id) {
+      return res
+        .status(403)
+        .json({ message: "You are not authorized to delete this product" });
     }
 
     // Get public IDs of images
@@ -258,7 +261,7 @@ export const deleteMyProduct = async (req, res) => {
     // Delete images from Cloudinary
     try {
       const deletePromises = publicIds.map((publicId) =>
-        cloudinary.uploader.destroy(`products/${publicId}`)
+        cloudinary.uploader.destroy(`bee-products/${publicId}`)
       );
       await Promise.all(deletePromises);
     } catch (error) {
@@ -266,7 +269,7 @@ export const deleteMyProduct = async (req, res) => {
       return res.status(500).json({ message: "Image deletion failed" });
     }
 
-    await Product.findByIdAndDelete(req.params.id);
+    await Product.delete(req.params.id);
     res.status(200).json({ message: "Product deleted successfully" });
   } catch (error) {
     console.error("Error deleting product:", error);
@@ -289,17 +292,17 @@ export const rateProduct = async(req, res) => {
     }
     
     // Check if product exists
-    const product = await Product.findOne({ id: productId });
+    const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
 
     // Prevent sellers from rating their own products
-    if (user?.id.toString() === product?.sellerId?.id.toString()) {
+    if (user?.id === product?.seller_id) {
       return res.status(400).json({ message: "Sellers cannot rate their own products" });
     }
     
-    const rate_result = await P_S.findOneAndUpdate(
+    const rate_result = await Rating.findOneAndUpdate(
       { productId: productId, userId: user.id },
       { $set: { rating: rating } },
       { new: false, upsert: true, runValidators: true, includeResultMetadata: true }
@@ -310,13 +313,14 @@ export const rateProduct = async(req, res) => {
       return res.status(200).json({ message: "Rating unchanged" });
     }
 
-    const ratings = await P_S.find({ productId: productId });
+    const ratings = await Rating.find({ productId: productId });
     const sumRatings = ratings.reduce((sum, r) => sum + r.rating, 0);
     const averageRating = ratings.length > 0 ? sumRatings / ratings.length : 0;
 
-    product.rate_score = Math.round(averageRating * 10) / 10; // Round to 1 decimal place
-    product.rate_count = ratings.length;
-    await product.save(); 
+    await Product.update(productId, {
+      rate_score: averageRating,
+      rate_count: ratings.length
+    });
 
     res.status(200).json({ message: "Product rated successfully" });
   } catch (error) {
@@ -337,7 +341,7 @@ export const deleteRating = async (req, res) => {
       return res.status(401).json({ message: "Authentication required" });
     }
 
-    const deletedRating = await P_S.findOneAndDelete({
+    const deletedRating = await Rating.findOneAndDelete({
       productId,
       userId: user.id,
     });
