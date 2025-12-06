@@ -14,6 +14,16 @@ const fetchAllProducts = async () => {
   return response.data;
 };
 
+const fetchAllProcessedProducts = async ({filters, sortBy, isDescending}) => {
+  const response = await axios.post("/products", {
+    filters,
+    sortBy,
+    isDescending
+  });
+  // console.log("All products fetched:", response.data);
+  return response.data;
+};
+
 const createProduct = async (productData) => {
   const response = await axios.post("/products/create-my-product", productData);
   // console.log("Product created:", response.data);
@@ -56,6 +66,26 @@ export function useAllProducts() {
     onError: (error) => {
       console.error("Error fetching all products:", error);
       toast.error("Failed to fetch products");
+    },
+  });
+}
+
+export function useAllProcessedProducts() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: fetchAllProcessedProducts,
+    onSuccess: () => {
+      // Invalidate all products cache to refetch fresh data
+      queryClient.invalidateQueries({
+        queryKey: productQueryKeys.all,
+      });
+
+      toast.success("Product updated successfully!");
+    },
+    onError: (error) => {
+      console.error("Error updating product:", error);
+      toast.error(error.response?.data?.message || "Failed to update product");
     },
   });
 }

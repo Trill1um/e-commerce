@@ -1,13 +1,18 @@
 import { create } from 'zustand';
 import { 
-  useAllProducts, 
+  useAllProducts,
+  useAllProcessedProducts,
   useCreateProduct,
   useUpdateProduct,
   useDeleteProduct,
   useRateProduct,
 } from '../lib/query';
 
-export const useProductProcessor = create((set, get) => ({
+export const useProductProcessor = create(
+  (
+    set, 
+    // get
+  ) => ({
   // states
   sort: {
     by: 'name', 
@@ -41,83 +46,6 @@ export const useProductProcessor = create((set, get) => ({
       },
       type: "date"
     },
-  },
-
-  // Products with applied filters and soritng
-  processProducts: (rawProducts) => {
-    const { filters } = get();
-    if (!rawProducts || !Array.isArray(rawProducts)) return [];
-    
-    // Apply filters
-    let filtered = rawProducts.filter(product => {
-      // Category filter
-      if (filters.category !== null && product?.category !== filters.category) return false;
-      
-      // Stock filter
-      if (filters.inStock !== null && product?.inStock !== filters.inStock) return false;
-      
-      // isLimited filter
-      if (filters.isLimited !== null && product?.isLimited !== filters.isLimited) return false;
-      
-      // Search filter
-      if (filters.searchTerm) {
-        const searchLower = filters.searchTerm.toLowerCase();
-        const matchesSearch = 
-          product?.name?.toLowerCase().includes(searchLower) ||
-          (product?.sellerId && product.sellerId.colonyName && product.sellerId.colonyName.toLowerCase().includes(searchLower));
-        if (!matchesSearch) return false;
-      }
-      
-      return true;
-    });
-    
-    // Apply sorting
-    return get().sortProducts(filtered);
-  },
-
-  // Helper function for sorting
-  sortProducts: (products) => {
-    const { sort, labels } = get();
-    
-    if (!products || !Array.isArray(products)) return [];
-    
-    // Find sort option configuration (array)
-    return [...products].sort((a, b) => {
-      let aValue = a?.[sort.by];
-      let bValue = b?.[sort.by];
-      
-      // Handle nullish values first
-      if (aValue == null && bValue == null) return 0;
-      if (aValue == null) return 1;
-      if (bValue == null) return -1;
-      
-      let comparison = 0;
-      
-      switch (labels[sort.by].type) {
-        case 'string':
-          aValue = String(aValue).toLowerCase();
-          bValue = String(bValue).toLowerCase();
-          comparison = aValue.localeCompare(bValue);
-          break;
-          
-        case 'number':
-          aValue = parseFloat(aValue) || 0;
-          bValue = parseFloat(bValue) || 0;
-          comparison = aValue - bValue;
-          break;
-          
-        case 'date':
-          aValue = new Date(aValue);
-          bValue = new Date(bValue);
-          comparison = aValue.getTime() - bValue.getTime();
-          break;
-          
-        default:
-          comparison = aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-      }
-      
-      return sort.order === 'asc' ? comparison : -comparison;
-    });
   },
 
   // Case-specific setters
@@ -155,24 +83,31 @@ export const useProductProcessor = create((set, get) => ({
 }));
 
 export function useProcessedProducts() {
-  const query = useAllProducts();
   const processor = useProductProcessor();
+  const { filters, sort } = processor;
+  const processed = useAllProcessedProducts({
+    filters,
+    sortBy: sort.by,
+    sortOrder: sort.order,
+  });
+  const raw = useAllProducts();
+
   const createMutation = useCreateProduct();
   const updateMutation = useUpdateProduct();
   const deleteMutation = useDeleteProduct();
-  
-  const rawProducts = query.data?.products || query.data || [];
-  const processedProducts = processor.processProducts(rawProducts);
-  
+
+  const rawProducts = raw.data?.products || raw.data || [];
+  const processedProducts = processed.data?.products || processed.data || [];
+
   return {
     // Data
-    products: processedProducts,
-    rawProducts,
+    products: processed,
+    rawProducts: processedProducts,
 
     // Query states
-    isLoading: query.isLoading,
-    error: query.error,
-    refetch: query.refetch,
+    isLoading: rawProducts.isLoading,
+    error: rawProducts.error,
+    refetch: rawProducts.refetch,
     
     // Mutations
     createProduct: createMutation.mutate,
@@ -197,6 +132,7 @@ export function useProcessedProducts() {
     ...processor
   };
 }
+
 
 export function useFeaturedProducts() {
   const { rawProducts, isLoading, error } = useProcessedProducts();
