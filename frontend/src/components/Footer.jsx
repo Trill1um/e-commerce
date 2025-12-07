@@ -138,27 +138,6 @@ const Footer = () => {
           <p className="bee-footer-body text-center lg:text-right w-full text-xs sm:text-sm lg:text-base">
             All rights reserved © Copyright
           </p>
-          {/* Error Reveal Button and Error List */}
-          <div className="w-full flex flex-col items-center mt-4 gap-2">
-            <button
-              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors text-xs sm:text-sm"
-              onClick={() => setShowErrors((v) => !v)}
-              type="button"
-            >
-              {showErrors ? "Hide Errors" : `Show Errors (${errors.length})`}
-            </button>
-            {showErrors && errors.length > 0 && (
-              <div className="max-h-48 overflow-y-auto w-full bg-red-100 border border-red-400 rounded p-4 mt-2">
-                <ul className="list-disc list-inside text-xs sm:text-sm text-red-800">
-                  {errors.map((err, index) => (
-                    <li key={index} className="mb-1">
-                      {err.message || String(err)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
         </div>
       </div>
     }

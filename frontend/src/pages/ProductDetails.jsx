@@ -92,9 +92,6 @@ const ProductDetails = () => {
   };
 
   const handleBuy = () => {
-    if (product && product?.sellerId && product?.sellerId?.facebookLink) {
-      window.open("https://www.facebook.com/" + product?.sellerId?.facebookLink, "_blank");
-    }
   };
 
   const handleSubmitRating = async () => {
@@ -121,7 +118,7 @@ const ProductDetails = () => {
     }
 
     // Check if user is trying to rate their own product
-    if (user.id === product?.sellerId?.id) {
+    if (user.id === product?.seller_id) {
       toast.error("You cannot rate your own product");
       return;
     }
@@ -303,7 +300,7 @@ const ProductDetails = () => {
                 {/* Seller Name */}
                 <div className="flex items-center gap-2">
                   <span className="bee-tag bg-secondary text-sm font-medium px-3 py-1 rounded-full flex items-center gap-2">
-                    {product?.sellerId?.colonyName || "no Name"}
+                    {product?.colonyName || "no Name"}
                   </span>
                 </div>
                 {/* Product Name */}
@@ -358,14 +355,14 @@ const ProductDetails = () => {
                       Sign in to rate this product
                     </p>
                   )}
-                  {user && user.id === product?.sellerId?.id && (
+                  {user && user.id === product?.seller_id && (
                     <p className="text-sm text-amber-600">
                       You can't rate your own product
                     </p>
                   )}
                   
                   {/* Show rating controls when expanded and user can rate */}
-                  {isRatingExpanded && user && user.id !== product?.sellerId?.id && (
+                  {isRatingExpanded && user && user.id !== product?.seller_id && (
                     <div className="flex flex-col gap-2 mt-2">
                       {userRating > 0 && (
                         <div className="flex gap-2 items-center">

@@ -8,13 +8,12 @@ CREATE TABLE users (
   email VARCHAR(100) UNIQUE NOT NULL,
   password VARCHAR(1024) NOT NULL,
   role ENUM('seller', 'buyer') DEFAULT 'buyer',
-  code VARCHAR(255),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   
   -- Conditional validation done in application layer
   CHECK (email REGEXP '^[^@]+@[^@]+\\.[^@]+$'),
-  CHECK (CHAR_LENGTH(email) >= 5 AND CHAR_LENGTH(email) <= 100),
+  CHECK (CHAR_LENGTH(email) >=10 AND CHAR_LENGTH(email) <= 100),
   CHECK (CHAR_LENGTH(password) >= 6),
   CHECK (colony_name IS NULL OR (CHAR_LENGTH(colony_name) >= 2 AND CHAR_LENGTH(colony_name) <= 50))
 );

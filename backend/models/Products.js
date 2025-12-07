@@ -106,10 +106,33 @@ class Product {
   
   // Find all products with filters
   static async findAll({filters, sortBy, isDescending} = {}) {
-    let query = 'SELECT p.id, p.seller_id, p.name, p.description, p.price, p.category, p.is_limited as isLimited, p.in_stock as inStock, p.rate_score, p.rate_count, p.created_at, p.updated_at, u.colony_name as colonyName FROM products as p inner join users as u on u.id=p.seller_id WHERE 1=1';
+    let query = `
+    SELECT 
+    p.id, 
+    p.seller_id, 
+    p.name as name, 
+    p.description, 
+    p.price as price, 
+    p.category, 
+    p.is_limited as isLimited, 
+    p.in_stock as inStock, 
+    p.rate_score, 
+    p.rate_count, 
+    p.created_at as createdAt, 
+    p.updated_at, 
+    u.colony_name as colonyName 
+    FROM products as p inner join users as u on u.id=p.seller_id 
+    WHERE 1=1
+    `
+    ;
     const params = [];
     if (filters) {
-      console.log("Filters in Product Model:", filters);
+      // console.log("Filters in Product Model:", filters);
+    }
+    if (filters?.sellerId) {
+      query += ' AND p.seller_id = ?';
+      params.push(filters.sellerId);
+      // console.log("Filtering by sellerId:", filters.sellerId);
     }
     if (filters?.category) {
       query += ' AND p.category = ?';
@@ -118,24 +141,32 @@ class Product {
     
     if (filters?.isLimited !== undefined) {
       query += ' AND p.is_limited = ?';
-      params.push(filters.isLimited);
+      params.push(filters.isLimited=="true"?1:0);
     }
     
     if (filters?.inStock !== undefined) {
       query += ' AND p.in_stock = ?';
-      params.push(filters.inStock);
+      params.push(filters.inStock=="true"?1:0);
     }
     
+    if (filters?.searchTerm) {
+      query += ' AND p.name LIKE ?';
+      params.push(`%${filters.searchTerm}%`);
+    }
     
     if (sortBy) {
-      const order = isDescending ? 'DESC' : 'ASC';
-      query += ` ORDER BY p.${sortBy} ${order}`;
+      const order = isDescending=="true" ? 'DESC' : 'ASC';
+      query += ` ORDER BY ${sortBy} ${order}`;
     }
-
+    
     const [products] = await pool.execute(query, params);
     
     // Get images for each product
     for (const product of products) {
+      // Convert TINYINT to boolean
+      product.isLimited = Boolean(product.isLimited);
+      product.inStock = Boolean(product.inStock);
+      
       const [images] = await pool.execute(
         'SELECT image_url FROM product_images WHERE product_id = ? ORDER BY id',
         [product.id]
@@ -148,7 +179,15 @@ class Product {
       );
       product.additionalInfo = additionalInfo;
     }
-    
+
+    // Get additional Info for each product
+    for (const product of products) {
+      const [additionalInfo] = await pool.execute(
+        'SELECT title, description FROM additional_info WHERE product_id = ?',
+        [product.id]
+      );
+      product.additionalInfo = additionalInfo;
+    }
     return products;
   }
   

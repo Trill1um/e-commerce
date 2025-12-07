@@ -4,28 +4,30 @@ import toast from "react-hot-toast";
 
 // ============ QUERY KEYS ============
 export const productQueryKeys = {
-  all: ["products"],
+  all: (params) => ["products", params],
+  seller: ["seller-products"],
 };
 
 // ============ API FUNCTIONS ============
-const fetchAllProducts = async () => {
-  const response = await axios.get("/products");
-  // console.log("All products fetched:", response.data);
+const fetchAllProcessedProducts = async ({ filters = {}, sortBy, isDescending }) => {
+  const queryParams = {
+    ...filters,
+    ...(sortBy && { sortBy }),
+    ...(isDescending !== undefined && { isDescending }),
+  };
+
+  const response = await axios.get('/products', { params: queryParams });
   return response.data;
 };
 
-const fetchAllProcessedProducts = async ({filters, sortBy, isDescending}) => {
-  const response = await axios.post("/products", {
-    filters,
-    sortBy,
-    isDescending
-  });
-  // console.log("All products fetched:", response.data);
+const fetchSellerProducts = async () => {
+  const response = await axios.get(`/products/my-products`);
+  // console.log(`Products for seller fetched from query:`, response.data);
   return response.data;
-};
+}
 
 const createProduct = async (productData) => {
-  const response = await axios.post("/products/create-my-product", productData);
+  const response = await axios.post("/products", productData);
   // console.log("Product created:", response.data);
   toast.success(response.data.message);
   return response.data;
@@ -58,10 +60,11 @@ const unRateProduct = async ({ productId }) => {
 };
 
 // ============ QUERY HOOKS ============
-export function useAllProducts() {
-  return useQuery({
-    queryKey: productQueryKeys.all,
-    queryFn: fetchAllProducts,
+export function useAllProcessedProducts({ filters = {}, sortBy, isDescending } = {}) {
+    const params = { filters, sortBy, isDescending };
+    return useQuery({
+    queryKey: productQueryKeys.all(params),
+    queryFn: () => fetchAllProcessedProducts(params),
     staleTime: Infinity,
     onError: (error) => {
       console.error("Error fetching all products:", error);
@@ -70,22 +73,14 @@ export function useAllProducts() {
   });
 }
 
-export function useAllProcessedProducts() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: fetchAllProcessedProducts,
-    onSuccess: () => {
-      // Invalidate all products cache to refetch fresh data
-      queryClient.invalidateQueries({
-        queryKey: productQueryKeys.all,
-      });
-
-      toast.success("Product updated successfully!");
-    },
+export function useSellerProcessedProducts() {
+    return useQuery({
+    queryKey: productQueryKeys.seller,
+    queryFn: fetchSellerProducts,
+    staleTime: Infinity,
     onError: (error) => {
-      console.error("Error updating product:", error);
-      toast.error(error.response?.data?.message || "Failed to update product");
+      console.error("Error fetching all products:", error);
+      toast.error("Failed to fetch products");
     },
   });
 }
@@ -99,7 +94,10 @@ export function useCreateProduct() {
     onSuccess: () => {
       // Invalidate all products cache
       queryClient.invalidateQueries({
-        queryKey: productQueryKeys.all,
+        queryKey: ["products"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: productQueryKeys.seller,
       });
     },
     onError: (error) => {
@@ -117,7 +115,10 @@ export function useUpdateProduct() {
     onSuccess: () => {
       // Invalidate all products cache to refetch fresh data
       queryClient.invalidateQueries({
-        queryKey: productQueryKeys.all,
+        queryKey: ["products"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: productQueryKeys.seller,
       });
 
       toast.success("Product updated successfully!");
@@ -137,7 +138,10 @@ export function useDeleteProduct() {
     onSuccess: () => {
       // Invalidate all products cache to refetch fresh data
       queryClient.invalidateQueries({
-        queryKey: productQueryKeys.all,
+        queryKey: ["products"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: productQueryKeys.seller,
       });
 
       toast.success("Product deleted successfully!");
@@ -155,7 +159,7 @@ export function useRateProduct() {
     mutationFn: rateProduct,
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: productQueryKeys.all,
+        queryKey: ["products"],
       });
     },
     onError: (error) => {
@@ -171,7 +175,7 @@ export function useUnRateProduct() {
     mutationFn: unRateProduct,
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: productQueryKeys.all,
+        queryKey: ["products"],
       });
     },
     onError: (error) => {
@@ -187,10 +191,13 @@ export function useInvalidateProducts() {
 
   return {
     invalidateAll: () => {
-      queryClient.invalidateQueries({ queryKey: productQueryKeys.all });
+      // Invalidate all queries that start with ["products"]
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: productQueryKeys.seller });
     },
     refetchAll: () => {
-      queryClient.refetchQueries({ queryKey: productQueryKeys.all });
+      queryClient.refetchQueries({ queryKey: ["products"] });
+      queryClient.refetchQueries({ queryKey: productQueryKeys.seller });
     },
   };
 }

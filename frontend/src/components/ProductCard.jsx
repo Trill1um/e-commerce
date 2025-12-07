@@ -13,6 +13,7 @@ import placeholder from "../assets/placeholder.png";
 const ProductCard = ({ product, isPreview = false }) => {
   // Function to get category icon based on product category
   const navigate = useNavigate();
+  console.log(product)
   const getCategoryIcon = (category) => {
     const iconMap = {
       Food: burgerIcon,
@@ -31,7 +32,6 @@ const ProductCard = ({ product, isPreview = false }) => {
 
   //open messenger link in new tab
   const onBuy = () => {
-    if (!isPreview) window.open("https://www.facebook.com/" + product?.sellerId?.facebookLink, "_blank");
   };
 
   return (
@@ -45,11 +45,11 @@ const ProductCard = ({ product, isPreview = false }) => {
             <div className="absolute inset-0 bg-black flex items-center justify-center z-10">
               {/* Diagonal Cross Lines */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-full h-0.5 bg-accent transform rotate-45 origin-center absolute"></div>
-                <div className="w-full h-0.5 bg-accent transform -rotate-45 origin-center absolute"></div>
+                <div className="w-full h-0.5 bg-red-600 transform rotate-45 origin-center absolute"></div>
+                <div className="w-full h-0.5 bg-red-600 transform -rotate-45 origin-center absolute"></div>
               </div>
               {/* Out of Stock Text */}
-              <div className="bg-accent px-[0.75rem] py-[0.5rem] rounded-[0.5rem] z-10">
+              <div className="bg-red-600 px-[0.75rem] py-[0.5rem] rounded-[0.5rem] z-10">
                 <p className="font-bold text-white bee-body-text-desktop">
                   OUT OF STOCK
                 </p>

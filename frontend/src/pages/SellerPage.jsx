@@ -32,9 +32,8 @@ const SellerProducts = ({ user }) => {
     Other: <OtherIcon className="text-amber-600 stroke-current w-5 h-5" />,
   };
 
-  const { sellerProducts, isLoading, error } = useUserProducts(user?.id);
-  const { deleteProductAsync, isDeleting, isCreating } = useProcessedProducts();
-
+  const { deleteProductAsync, isLoading, error, isDeleting, isCreating } = useProcessedProducts();
+  const {products} = useUserProducts();
   // Update local products when filtered products change
   const handleEdit = (product) => {
     navigate(`/myProduct/editing-${product?.id}`);
@@ -94,6 +93,8 @@ const SellerProducts = ({ user }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-yellow-50 p-3 sm:p-6">
+      <pre className="bg-gray-100 p-4 rounded overflow-auto max-h-96 text-xs mb-4">
+      </pre>
       <div
         className={`${
           isDeleting || isCreating
@@ -113,7 +114,7 @@ const SellerProducts = ({ user }) => {
                   Your Honey Comb
                 </h1>
                 <p className="text-amber-700 text-xs sm:text-sm">
-                  {sellerProducts.length} honey cells in total
+                  {products.length} honey cells in total
                 </p>
               </div>
             </div>
@@ -161,7 +162,7 @@ const SellerProducts = ({ user }) => {
               </thead>
               {/* Table Body */}
               <tbody className="divide-y divide-amber-100">
-                {sellerProducts.map((product, index) => (
+                {products.map((product, index) => (
                   <tr
                     key={product?.id}
                     className={`hover:bg-amber-50/50 transition-colors duration-150 ${
@@ -220,7 +221,7 @@ const SellerProducts = ({ user }) => {
                     {/* Price */}
                     <td className="px-2 xl:px-4 py-3">
                       <span className="text-xs xl:text-sm text-primary font-semibold text-green-700 break-words max-w-[80px]">
-                        &#8369; {product?.price?.toFixed(2) || "0.00"}
+                        &#8369; {product?.price || "0.00"}
                       </span>
                     </td>
 
@@ -281,7 +282,7 @@ const SellerProducts = ({ user }) => {
           </div>
 
           {/* Empty State - Desktop */}
-          {sellerProducts.length === 0 && (
+          {products.length === 0 && (
             <div className="text-center py-12">
               <span className="text-4xl text-amber-400 block mb-4">
                 {ICONS.package}
@@ -295,7 +296,7 @@ const SellerProducts = ({ user }) => {
 
         {/* Mobile Card Layout */}
         <div className="md:hidden space-y-3">
-          {sellerProducts.map((product, index) => (
+          {products.map((product, index) => (
             <div
               key={product?.id || product?.id || index}
               className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-amber-200 p-4"
@@ -328,7 +329,7 @@ const SellerProducts = ({ user }) => {
                       </h3>
                       <div className="flex items-center gap-2 mb-1 min-w-0">
                         <span className="text-sm font-medium text-green-700 truncate max-w-1/2 flex-shrink-0">
-                          &#8369; {product?.price?.toFixed(2) || "0.00"}
+                          &#8369; {product?.price || "0.00"}
                         </span>
                         <span className="inline-flex items-center px-2 py-0.5 gap-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200 truncate min-w-0">
                           <span className="flex-shrink-0">
@@ -392,7 +393,7 @@ const SellerProducts = ({ user }) => {
           ))}
 
           {/* Empty State - Mobile */}
-          {sellerProducts.length === 0 && (
+          {products.length === 0 && (
             <div className="text-center py-12">
               <span className="text-4xl text-amber-400 block mb-4">
                 {ICONS.package}

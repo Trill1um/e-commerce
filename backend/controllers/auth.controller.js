@@ -113,7 +113,7 @@ export const signup = async (req, res) => {
   const { colonyName, email, password, confirmPassword, role } =
     req.body;
   try {
-    console.log("ChecK: ", req.body)
+    // console.log("ChecK: ", req.body)
     // Validate input
     if (!email || !password) {
       return res.status(400).json({ message: "Missing credentials detected" });
@@ -201,6 +201,22 @@ export const logout = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+export const deleteAccount = async (req, res) => {
+  try {
+    console.log("user: ", req.user)
+    const userId = req.user.id;
+    await User.delete(userId);
+
+    // Clear cookies
+    res.clearCookie("accessToken");
+    res.clearCookie("refreshToken");
+    res.status(200).json({ message: "Account deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting account:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
 
 export const refreshToken = async (req, res) => {
   try {

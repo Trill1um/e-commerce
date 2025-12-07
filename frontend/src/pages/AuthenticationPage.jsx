@@ -16,7 +16,6 @@ const AuthPage = () => {
     email: "",
     password: "",
     confirmPassword: "",
-    facebookLink: "",
     role: "buyer",
     acceptTerms: false,
 
@@ -34,7 +33,6 @@ const AuthPage = () => {
       ...prev,
       role: currentRole === "buyer" ? "seller" : "buyer",
       colonyName: "",
-      facebookLink: "",
     }));
   };
   // Toggle between login and signup
@@ -45,7 +43,6 @@ const AuthPage = () => {
       email: "",
       password: "",
       confirmPassword: "",
-      facebookLink: "",
       acceptTerms: false,
     });
     setErrors({});
@@ -101,13 +98,6 @@ const AuthPage = () => {
           newErrors.colonyName = "Colony name is required";
         }
 
-        if (!formData.facebookLink) {
-          newErrors.facebookLink = "Messenger link is required";
-        } else if (!formData.facebookLink.includes("www.facebook.com/")) {
-          newErrors.facebookLink =
-            "Please provide a valid Facebook link (www.facebook.com/...)";
-        }
-
         if (!formData.acceptTerms) {
           newErrors.acceptTerms = "Please accept the terms and conditions";
         }
@@ -119,7 +109,6 @@ const AuthPage = () => {
 
   // Handle form submission
   const handleSubmit = async (e) => {
-    console.log("Submit button pressed")
     e.preventDefault();
 
     if (!validateForm()) return;
@@ -180,8 +169,6 @@ const AuthPage = () => {
           <p className="text-gray-700 mb-3">This research tool collects:</p>
           <ul className="list-disc list-inside text-gray-700 mb-4 space-y-1">
             <li>Email addresses for account creation</li>
-            <li>Facebook Account for buyer-seller communication</li>
-            <li>Survey responses for research analysis</li>
             <li>Usage patterns to improve the tool</li>
           </ul>
           <p className="text-gray-700 text-sm">
@@ -379,34 +366,6 @@ const AuthPage = () => {
                   {errors.confirmPassword && (
                     <p className="text-accent bee-body-text-desktop text-sm mt-1">
                       {errors.confirmPassword}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {/* Messenger Link Field - Only for Signup */}
-              {!isLogin && formData.role === "seller" && (
-                <div>
-                  <label className="block bee-title-h6-desktop mb-2">
-                    Facebook Profile Link *
-                  </label>
-                  <input
-                    type="url"
-                    value={formData.facebookLink}
-                    onChange={(e) =>
-                      handleInputChange("facebookLink", e.target.value)
-                    }
-                    placeholder="https://www.facebook.com/your.username"
-                    className={`input w-full px-4 py-3 rounded-[15px] bee-body-text-desktop ${
-                      errors.facebookLink ? "border-accent" : ""
-                    }`}
-                  />
-                  <p className="text-secondary bee-body-text-desktop text-sm mt-1">
-                    Note: Go to your Facebook (Web) Profile Page and copy the URL
-                  </p>
-                  {errors.facebookLink && (
-                    <p className="text-accent bee-body-text-desktop text-sm mt-1">
-                      {errors.facebookLink}
                     </p>
                   )}
                 </div>

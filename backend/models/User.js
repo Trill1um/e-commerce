@@ -13,7 +13,7 @@ class User {
   }
   
   // Create user with hashed password
-  static async create({ colonyName, email, password, role = 'buyer', code }) {
+  static async create({ colonyName, email, password, role = 'buyer' }) {
     // Validate
     this.validateSellerFields({ colonyName, role });
     
@@ -32,8 +32,8 @@ class User {
     }
     
     const [result] = await pool.execute(
-      'INSERT INTO users (colony_name, email, password, role, code) VALUES (?, ?, ?, ?, ?)',
-      [colonyName || null, email.trim(), hashedPassword, role, code || null]
+      'INSERT INTO users (colony_name, email, password, role) VALUES (?, ?, ?, ?)',
+      [colonyName || null, email.trim(), hashedPassword, role || null]
     );
     
     return result.insertId;
@@ -59,7 +59,7 @@ class User {
 
   static async findByIdNoPassword(id) {
     const [rows] = await pool.execute(
-      'SELECT id, colony_name, email, role, code, created_at, updated_at FROM users WHERE id = ?',
+      'SELECT id, colony_name, email, role, created_at, updated_at FROM users WHERE id = ?',
       [id]
     );
     return rows[0];

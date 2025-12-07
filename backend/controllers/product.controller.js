@@ -22,13 +22,14 @@ export const getProduct = async (req, res) => {
 
 export const getAllProducts = async (req, res) => {
   try {
-    let params=req.body.params||{};
-    console.log("Received params for getAllProducts:", params);
+    let params=req.query||{};
     let filters={
       category: params.category,
       isLimited: params.isLimited,
       inStock: params.inStock,
+      searchTerm: params.searchTerm,
     }
+
     // console.log("BODY: ", req.body.params);
     const products = await Product.findAll({filters, sortBy: params.sortBy, isDescending: params.isDescending});
 
@@ -52,7 +53,7 @@ export const getAllProducts = async (req, res) => {
         userRated: false
       }));
     }
-
+    console.log("Products fetched:", productsWithRatingFlag);
     res
       .status(200)
       .json({ products: productsWithRatingFlag, message: "Products fetched successfully" });
@@ -123,7 +124,6 @@ export const createMyProduct = async (req, res) => {
 
 export const getMyProducts = async (req, res) => {
   try {
-    console.log("Fetching products for seller ID:", req.user.id);
     const products = await Product.findAll({ filters:{sellerId: req.user.id} });
     
     if (!products || products.length === 0) {
@@ -153,16 +153,22 @@ export const updateMyProduct = async (req, res) => {
       additionalInfo,
       imageChanged,
     } = req.body;
+    
     const product = await Product.findById(req.params.id);
+    try {
+      
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
 
-    if (!product) {
-      return res.status(404).json({ message: "Product not found" });
-    }
-
-    if (product.seller_id !== req.user.id) {
-      return res
-        .status(403)
-        .json({ message: "You are not authorized to update this product" });
+      if (product.seller_id !== req.user.id) {
+        return res
+          .status(403)
+          .json({ message: "You are not authorized to update this product" });
+      }
+    } catch (error) {
+      console.error("Error verifying product ownership:", error);
+      // return res.status(500).json({ message: "Internal Server Error" });
     }
 
     // Handle image updates
@@ -170,44 +176,70 @@ export const updateMyProduct = async (req, res) => {
 
     if (imageChanged && images && images.length > 0) {
       try {
-        // Delete old images from Cloudinary if they exist
+        // Identify which images are new vs existing
+        const existingUrls = images.filter(img => 
+          typeof img === 'string' && img.startsWith('https://res.cloudinary.com')
+        );
+        
+        // Delete old images that are NOT in the new images array
         if (product.images && product.images.length > 0) {
-          const deletePromises = product.images.map(async (imageUrl) => {
+          const imagesToDelete = product.images.filter(oldUrl => 
+            !existingUrls.includes(oldUrl)
+          );
+          
+          const deletePromises = imagesToDelete.map(async (imageUrl) => {
             try {
               // Extract publicid from Cloudinary URL
               const publicId = imageUrl.split("/").pop().split(".")[0];
               const fullPublicId = `bee-products/${publicId}`;
               await cloudinary.uploader.destroy(fullPublicId);
-            } catch (deleteError) {
-              console.warn(`Failed to delete image: ${imageUrl}`, deleteError);
+            } catch (error) {
+              console.log(`Failed to delete image: ${imageUrl}`, error);
               // Continue with update even if deletion fails
             }
           });
           await Promise.all(deletePromises);
         }
+        // console.log(images);
 
         // Upload new images to Cloudinary
-        const uploadPromises = images.map((image) =>
-          cloudinary.uploader.upload(
-            typeof image == "object" ? image.base64 : image,
-            {
-              folder: "bee-products",
-              resource_type: "auto", // Handles different file types
+        let uploadPromises=null;
+        try {
+          uploadPromises = images.map((image) => {
+            // Check if it's already a Cloudinary URL - if so, keep it as-is
+            const imageStr = typeof image === "object" ? image.base64 : image;
+            if (typeof imageStr === 'string' && imageStr.startsWith('https://res.cloudinary.com')) {
+              return Promise.resolve({ secure_url: imageStr });
             }
-          )
-        );
+            // Otherwise upload to Cloudinary
+            return cloudinary.uploader.upload(
+              imageStr,
+              {
+                folder: "bee-products",
+                resource_type: "auto", // Handles different file types
+              }
+            );
+          });
+        } catch(error) {
+          console.log("Error uploading new images to Cloudinary:", error);
+        }
 
         const cloudinaryResponses = await Promise.all(uploadPromises);
 
-        // Extract secure URLs from successful uploads
-        updatedImages = cloudinaryResponses
+        try{
+
+          // Extract secure URLs from successful uploads
+          updatedImages = cloudinaryResponses
           .filter((response) => response && response.secure_url)
           .map((response) => response.secure_url);
-
-        if (updatedImages.length === 0) {
-          return res
+          
+          if (updatedImages.length === 0) {
+            return res
             .status(400)
             .json({ message: "No images were successfully uploaded" });
+          }
+        } catch(error){
+          console.log("Error processing uploaded images:", error);
         }
       } catch (error) {
         console.error("Error handling Cloudinary images:", error);

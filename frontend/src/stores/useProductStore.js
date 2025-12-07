@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { 
-  useAllProducts,
   useAllProcessedProducts,
+  useSellerProcessedProducts,
   useCreateProduct,
   useUpdateProduct,
   useDeleteProduct,
@@ -85,29 +85,34 @@ export const useProductProcessor = create(
 export function useProcessedProducts() {
   const processor = useProductProcessor();
   const { filters, sort } = processor;
+  
+  // Only call the hook once with the current filters/sort
   const processed = useAllProcessedProducts({
-    filters,
+    filters: {
+      category: filters.category,
+      inStock: filters.inStock,
+      searchTerm: filters.searchTerm,
+      isLimited: filters.isLimited,
+    },
     sortBy: sort.by,
-    sortOrder: sort.order,
+    isDescending: sort.order === 'desc',
   });
-  const raw = useAllProducts();
 
   const createMutation = useCreateProduct();
   const updateMutation = useUpdateProduct();
   const deleteMutation = useDeleteProduct();
 
-  const rawProducts = raw.data?.products || raw.data || [];
-  const processedProducts = processed.data?.products || processed.data || [];
-
+  const processedProducts = processed.data?.products || [];
   return {
     // Data
-    products: processed,
-    rawProducts: processedProducts,
+    products: processedProducts,
+    rawProducts: processedProducts, // Same data, just alias for backward compatibility
 
     // Query states
-    isLoading: rawProducts.isLoading,
-    error: rawProducts.error,
-    refetch: rawProducts.refetch,
+    isLoading: processed.isLoading || createMutation.isPending || updateMutation.isPending || deleteMutation.isPending,
+    isFetching: processed.isLoading,
+    error: processed.error,
+    refetch: processed.refetch,
     
     // Mutations
     createProduct: createMutation.mutate,
@@ -207,28 +212,23 @@ export function useUniqueProductCategories() {
 
 export function useProductById(productId) {
   const { rawProducts, isLoading, error } = useProcessedProducts();
-  if (!productId) return {product:null};
-  const product = rawProducts.find(p => p.id === productId);
+  
+  // Don't conditionally return - always return an object
+  const product = productId ? rawProducts.find(p => p.id === parseInt(productId)) : null;
   
   return {
-    product,
+    product: product || null,
     isLoading,
     error,
   };
 }
 
-export function useUserProducts(sellerId) {
-  const { rawProducts, isLoading, error } = useProcessedProducts();
-  
-  // Filter products by seller
-  const sellerProducts = rawProducts.filter(p => 
-    p?.sellerId?.id === sellerId
-  );
-  
+export function useUserProducts() {
+  const sellerQuery = useSellerProcessedProducts();
   return {
-    sellerProducts,
-    isLoading,
-    error,
+    products: sellerQuery.data?.products || [],
+    isLoading: sellerQuery.isLoading,
+    error: sellerQuery.error,
   };
 }
 

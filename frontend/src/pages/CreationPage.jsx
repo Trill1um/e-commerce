@@ -76,9 +76,8 @@ const fileToBase64 = (file) => {
 };
 
 const CreationPage = ({user}) => {
-  const { isCreating, isUpdating, createProductAsync, updateProductAsync } = useProcessedProducts((state) => ({
-    isCreating: state.isCreating,
-    isUpdating: state.isUpdating,
+  const { isLoading, createProductAsync, updateProductAsync } = useProcessedProducts((state) => ({
+    isLoading: state.isLoading,
     createProductAsync: state.createProductAsync,
     updateProductAsync: state.updateProductAsync,
   }));
@@ -446,7 +445,7 @@ const CreationPage = ({user}) => {
       </div>
 
       {/* Main Content */}
-      <div className={`${isCreating||isUpdating?"opacity-60 cursor-progress pointer-events-none":""} min-h-screen px-0 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 xl:py-16 max-w-[1440px] mx-auto`}>
+      <div className={`${isLoading?"opacity-60 cursor-progress pointer-events-none":""} min-h-screen px-0 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 xl:py-16 max-w-[1440px] mx-auto`}>
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 px-2 sm:px-4 py-2 mb-2 sm:mb-4">
           <div

@@ -440,10 +440,10 @@ const ProductGrid = ({ products }) => {
 // ============ MAIN COMPONENT ============
 const Catalog = () => {
   // Use the processed products hook
-  const { products, error } = useProcessedProducts();
+  const { products, rawProducts, error } = useProcessedProducts();
 
   // Error state
-  if (error) {
+  if (error || products === undefined || rawProducts === undefined) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center">
         <div className="text-center">

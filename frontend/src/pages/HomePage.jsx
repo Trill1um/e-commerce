@@ -318,7 +318,7 @@ const HomePage = () => {
           {Array.from({ length: 6 }, (_, index) => {
             return (
               <HoneyCell
-                key={`honey-cell-${featuredProducts[index]?.id || index}`}
+                key={`honey-cell-${featuredProducts[index]?.id || index*10}`}
                 className={coordinates[index]}
                 product={featuredProducts[index] || null}
                 location={location}
