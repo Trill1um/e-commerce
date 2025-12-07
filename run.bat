@@ -1,3 +1,3 @@
-docker start mysql_dev
-docker exec -it mysql_dev mysql -u mern_user -pmern_password mern_db
-@REM docker exec -it mysql_dev mysql -u root -prootpassword mern_db
+@echo off
+start cmd /c "cd /d %~dp0backend && npm install && npm run dev"
+start cmd /c "cd /d %~dp0frontend && npm install && npm run dev"
