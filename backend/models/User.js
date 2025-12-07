@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import pool from '../lib/db.js';
+import { getPool } from '../lib/db.js';
 
 class User {
   
@@ -31,7 +31,7 @@ class User {
       hashedPassword = await bcrypt.hash(password, salt);
     }
     
-    const [result] = await pool.execute(
+    const [result] = await getPool().execute(
       'INSERT INTO users (colony_name, email, password, role) VALUES (?, ?, ?, ?)',
       [colonyName || null, email.trim(), hashedPassword, role || null]
     );
@@ -41,7 +41,7 @@ class User {
   
   // Find by email
   static async findByEmail(email) {
-    const [rows] = await pool.execute(
+    const [rows] = await getPool().execute(
       'SELECT * FROM users WHERE email = ?',
       [email]
     );
@@ -50,7 +50,7 @@ class User {
   
   // Find by ID
   static async findById(id) {
-    const [rows] = await pool.execute(
+    const [rows] = await getPool().execute(
       'SELECT * FROM users WHERE id = ?',
       [id]
     );
@@ -58,7 +58,7 @@ class User {
   }
 
   static async findByIdNoPassword(id) {
-    const [rows] = await pool.execute(
+    const [rows] = await getPool().execute(
       'SELECT id, colony_name, email, role, created_at, updated_at FROM users WHERE id = ?',
       [id]
     );
@@ -75,7 +75,7 @@ class User {
       params.push(filters.role);
     }
     
-    const [rows] = await pool.execute(query, params);
+    const [rows] = await getPool().execute(query, params);
     return rows;
   }
   
@@ -137,7 +137,7 @@ class User {
     
     values.push(id);
     
-    await pool.execute(
+    await getPool().execute(
       `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
       values
     );
@@ -145,7 +145,7 @@ class User {
   
   // Delete user
   static async delete(id) {
-    await pool.execute('DELETE FROM users WHERE id = ?', [id]);
+    await getPool().execute('DELETE FROM users WHERE id = ?', [id]);
   }
 }
 

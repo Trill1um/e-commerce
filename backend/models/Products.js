@@ -1,4 +1,4 @@
-import pool from '../lib/db.js';
+import { getPool } from '../lib/db.js';
 
 class Product {
   
@@ -32,7 +32,7 @@ class Product {
       throw new Error('Seller ID is required');
     }
     
-    const connection = await pool.getConnection();
+    const connection = await getPool().getConnection();
     
     try {
       await connection.beginTransaction();
@@ -48,17 +48,18 @@ class Product {
       // Insert images
       for (let i = 0; i < images.length; i++) {
         await connection.execute(
-          'INSERT INTO product_images (product_id, image_url) VALUES (?, ?)',
-          [productId, images[i]]
+          'INSERT INTO product_images (image_index, product_id, image_url) VALUES (?, ?, ?)',
+          [i, productId, images[i]]
         );
       }
       
       // Insert additional info if provided
       if (additionalInfo && additionalInfo.length > 0) {
+        let idx=0;
         for (const info of additionalInfo) {
           await connection.execute(
-            'INSERT INTO additional_info (product_id, title, description) VALUES (?, ?, ?)',
-            [productId, info.title || '', info.description || '']
+            'INSERT INTO additional_info (info_index, product_id, title, description) VALUES (?, ?, ?, ?)',
+            [idx++, productId, info.title || '', info.description || '']
           );
         }
       }
@@ -76,7 +77,7 @@ class Product {
 
   // Find by ID with images and additional info
   static async findById(id) {
-    const [products] = await pool.execute(
+    const [products] = await getPool().execute(
       'SELECT * FROM products WHERE id = ?',
       [id]
     );
@@ -88,15 +89,15 @@ class Product {
     const product = products[0];
     
     // Get images
-    const [images] = await pool.execute(
-      'SELECT image_url FROM product_images WHERE product_id = ? ORDER BY id',
+    const [images] = await getPool().execute(
+      'SELECT image_url FROM product_images WHERE product_id = ? ORDER BY image_index',
       [id]
     );
     product.images = images.map(img => img.image_url);
     
     // Get additional info
-    const [additionalInfo] = await pool.execute(
-      'SELECT title, description FROM additional_info WHERE product_id = ?',
+    const [additionalInfo] = await getPool().execute(
+      'SELECT title, description FROM additional_info WHERE product_id = ? ORDER BY info_index',
       [id]
     );
     product.additionalInfo = additionalInfo;
@@ -116,8 +117,6 @@ class Product {
     p.category, 
     p.is_limited as isLimited, 
     p.in_stock as inStock, 
-    p.rate_score, 
-    p.rate_count, 
     p.created_at as createdAt, 
     p.updated_at, 
     u.colony_name as colonyName 
@@ -159,35 +158,41 @@ class Product {
       query += ` ORDER BY ${sortBy} ${order}`;
     }
     
-    const [products] = await pool.execute(query, params);
+    const [products] = await getPool().execute(query, params);
+    const [ratings] = await getPool().execute('SELECT r.product_id, ROUND(AVG(r.score),2) as rating, COUNT(*) as count FROM ratings as r GROUP BY r.product_id;');
     
-    // Get images for each product
+    // Convert ratings array to dictionary
+    const ratingsMap = {};
+    for (const rating of ratings) {
+      ratingsMap[rating.product_id] = {
+        score: rating.rating,
+        count: rating.count
+      };
+    }
+
     for (const product of products) {
       // Convert TINYINT to boolean
       product.isLimited = Boolean(product.isLimited);
       product.inStock = Boolean(product.inStock);
-      
-      const [images] = await pool.execute(
-        'SELECT image_url FROM product_images WHERE product_id = ? ORDER BY id',
+      // Attach rating info
+      if (ratingsMap[product.id]) {
+        product.rate_score = ratingsMap[product.id].score;
+        product.rate_count = ratingsMap[product.id].count;
+      }
+    
+      const [images] = await getPool().execute(
+        'SELECT image_url FROM product_images WHERE product_id = ? ORDER BY image_index',
         [product.id]
       );
       product.images = images.map(img => img.image_url);
       
-      const [additionalInfo] = await pool.execute(
-        'SELECT title, description FROM additional_info WHERE product_id = ?',
+      const [additionalInfo] = await getPool().execute(
+        'SELECT title, description FROM additional_info WHERE product_id = ? ORDER BY info_index',
         [product.id]
-      );
+      ); 
       product.additionalInfo = additionalInfo;
     }
 
-    // Get additional Info for each product
-    for (const product of products) {
-      const [additionalInfo] = await pool.execute(
-        'SELECT title, description FROM additional_info WHERE product_id = ?',
-        [product.id]
-      );
-      product.additionalInfo = additionalInfo;
-    }
     return products;
   }
   
@@ -198,7 +203,7 @@ class Product {
       throw new Error('Product not found');
     }
     
-    const connection = await pool.getConnection();
+    const connection = await getPool().getConnection();
     
     try {
       await connection.beginTransaction();
@@ -234,14 +239,6 @@ class Product {
         updates.push('in_stock = ?');
         values.push(data.inStock);
       }
-      if (data.rate_score !== undefined) {
-        updates.push('rate_score = ?');
-        values.push(data.rate_score);
-      }
-      if (data.rate_count !== undefined) {
-        updates.push('rate_count = ?');
-        values.push(data.rate_count);
-      }
       
       if (updates.length > 0) {
         values.push(id);
@@ -256,8 +253,8 @@ class Product {
         await connection.execute('DELETE FROM product_images WHERE product_id = ?', [id]);
         for (let i = 0; i < data.images.length; i++) {
           await connection.execute(
-            'INSERT INTO product_images (product_id, image_url) VALUES (?, ?)',
-            [id, data.images[i]]
+            'INSERT INTO product_images (image_index, product_id, image_url) VALUES (?, ?, ?)',
+            [i, id, data.images[i]]
           );
         }
       }
@@ -265,10 +262,11 @@ class Product {
       // Update additional info if provided
       if (data.additionalInfo && Array.isArray(data.additionalInfo)) {
         await connection.execute('DELETE FROM additional_info WHERE product_id = ?', [id]);
+        let idx=0
         for (const info of data.additionalInfo) {
           await connection.execute(
-            'INSERT INTO additional_info (product_id, title, description) VALUES (?, ?, ?)',
-            [id, info.title || '', info.description || '']
+            'INSERT INTO additional_info (info_index, product_id, title, description) VALUES (?, ?, ?, ?)',
+            [idx++, id, info.title || '', info.description || '']
           );
         }
       }
@@ -285,32 +283,7 @@ class Product {
   
   // Delete product (cascade handled by foreign keys and trigger)
   static async delete(id) {
-    await pool.execute('DELETE FROM products WHERE id = ?', [id]);
-  }
-  
-  // Update rating
-  static async updateRating(id) {
-    try {
-      const product = await this.findById(id);
-      if (!product) {
-        throw new Error('Product not found');
-      }
-      const [ratings] = await pool.execute(
-        'SELECT score FROM ratings WHERE product_id = ?',
-        [id]
-      );
-      if (ratings.length === 0) {
-        returrn;
-      }
-      const totalScore = ratings.reduce((sum, r) => sum + r.score, 0);
-      const newAverage = totalScore / ratings.length;
-      await pool.execute(
-        'UPDATE products SET rate_score = ?, rate_count = ? WHERE id = ?',
-        [newAverage, ratings.length, id]
-      );
-    } catch (error) {
-      throw error;
-    }
+    await getPool().execute('DELETE FROM products WHERE id = ?', [id]);
   }
 }
 

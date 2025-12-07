@@ -53,7 +53,7 @@ export const getAllProducts = async (req, res) => {
         userRated: false
       }));
     }
-    console.log("Products fetched:", productsWithRatingFlag);
+    // console.log("Products fetched:", productsWithRatingFlag);
     res
       .status(200)
       .json({ products: productsWithRatingFlag, message: "Products fetched successfully" });
@@ -194,7 +194,7 @@ export const updateMyProduct = async (req, res) => {
               const fullPublicId = `bee-products/${publicId}`;
               await cloudinary.uploader.destroy(fullPublicId);
             } catch (error) {
-              console.log(`Failed to delete image: ${imageUrl}`, error);
+              console.error(`Failed to delete image: ${imageUrl}`, error);
               // Continue with update even if deletion fails
             }
           });
@@ -221,7 +221,7 @@ export const updateMyProduct = async (req, res) => {
             );
           });
         } catch(error) {
-          console.log("Error uploading new images to Cloudinary:", error);
+          console.error("Error uploading new images to Cloudinary:", error);
         }
 
         const cloudinaryResponses = await Promise.all(uploadPromises);
@@ -239,7 +239,7 @@ export const updateMyProduct = async (req, res) => {
             .json({ message: "No images were successfully uploaded" });
           }
         } catch(error){
-          console.log("Error processing uploaded images:", error);
+          console.error("Error processing uploaded images:", error);
         }
       } catch (error) {
         console.error("Error handling Cloudinary images:", error);

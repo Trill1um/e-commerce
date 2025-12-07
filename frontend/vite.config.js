@@ -10,7 +10,6 @@ export default defineConfig(({ mode }) => ({
       },
     })],
   server: mode === 'development' ? {
-    open: true,
     proxy: {
       '/api': {
         target: 'http://localhost:3000',

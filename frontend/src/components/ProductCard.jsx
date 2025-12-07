@@ -13,7 +13,6 @@ import placeholder from "../assets/placeholder.png";
 const ProductCard = ({ product, isPreview = false }) => {
   // Function to get category icon based on product category
   const navigate = useNavigate();
-  console.log(product)
   const getCategoryIcon = (category) => {
     const iconMap = {
       Food: burgerIcon,
@@ -104,6 +103,7 @@ const ProductCard = ({ product, isPreview = false }) => {
               <p className="max-w-[180px] truncate item-price">
                 &#8369; {" "}
                 {Number(product.price).toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                   useGrouping: false,
                 })}

@@ -11,6 +11,7 @@ const SellerPage = lazy(() => import("./pages/SellerPage"));
 const AuthenticationPage = lazy(() => import("./pages/AuthenticationPage"));
 const ProductDetails = lazy(() => import("./pages/ProductDetails"));
 const AboutPage = lazy(() => import("./pages/AboutUs"));
+const Admin = lazy(() => import("./pages/Admin"));
 import BeeLoadingScreen from "./components/BeeLoadingScreen";
 import NavBar from "./components/NavBar";
 import Footer from "./components/Footer";
@@ -29,6 +30,10 @@ const SellerOnlyRoute = ({ children, user }) => {
   return user?.role === 'seller' ? children : <Navigate to="/catalog" replace />;
 }
 
+const AdminOnlyRoute = ({ children, user }) => {
+  return user?.role === 'admin' ? children : <Navigate to="/" replace />;
+}
+
 function App() {
   const checkAuth = useUserStore((s) => s.checkAuth);
   const checkingAuth = useUserStore((s) => s.checkingAuth);
@@ -36,12 +41,14 @@ function App() {
   const { invalidateAll } = useInvalidateProducts();
 
   useEffect(() => {
+    useUserStore.getState().setInvalidateAll(invalidateAll);
+  }, [invalidateAll]);
+
+  useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
-  useEffect(() => {
-    useUserStore.getState().setInvalidateAll(invalidateAll);
-  }, [invalidateAll]);
+
 
   return (
     <div className="App-Box">
@@ -54,6 +61,11 @@ function App() {
             <Route path="/product/:id" element={<ProductDetails />} />
             <Route path="/catalog" element={<Catalog />} />
             <Route path="/about-us" element={<AboutPage />} />
+            <Route path="/admin" element={
+              <AdminOnlyRoute user={user}>
+                <Admin />
+              </AdminOnlyRoute>
+            } />
 
             {/* Protected routes - need login */}
             <Route

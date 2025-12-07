@@ -104,12 +104,10 @@ export const useUserStore = create((set, get) => ({
       toast.success("Account deleted successfully");
       
       await get().checkAuth();
-      // Brute Force
-      setTimeout(() => {
-        if (get().invalidateProducts) {
-          get().invalidateProducts();
-        }
-      }, 500);
+      // Force invalidate products
+      if (get().invalidateProducts) {
+        await get().invalidateProducts();
+      }
     } catch (error) {
       set((state) => ({ errors: [...state.errors, error] }));
       console.error(error);
@@ -123,7 +121,7 @@ export const useUserStore = create((set, get) => ({
       const response = await axios.get(`/auth/profile`);
       set({ isVerifying: false, user: response.data, checkingAuth: false });
       if (get().invalidateProducts) {
-        get().invalidateProducts();
+        await get().invalidateProducts();
       }
     } catch {
       set({ user: null, checkingAuth: false });

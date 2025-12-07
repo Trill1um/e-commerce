@@ -93,7 +93,7 @@ const SellerProducts = ({ user }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-yellow-50 p-3 sm:p-6">
-      <pre className="bg-gray-100 p-4 rounded overflow-auto max-h-96 text-xs mb-4">
+      <pre className="p-4 rounded overflow-auto max-h-96 text-xs mb-4">
       </pre>
       <div
         className={`${

@@ -7,7 +7,7 @@ CREATE TABLE users (
   colony_name VARCHAR(50),
   email VARCHAR(100) UNIQUE NOT NULL,
   password VARCHAR(1024) NOT NULL,
-  role ENUM('seller', 'buyer') DEFAULT 'buyer',
+  role ENUM('seller', 'buyer', 'admin') DEFAULT 'buyer',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   
@@ -27,8 +27,6 @@ CREATE TABLE products (
     category VARCHAR(100) NOT NULL,
     is_limited BOOLEAN NOT NULL DEFAULT FALSE,
     in_stock BOOLEAN NOT NULL DEFAULT TRUE,
-    rate_score DECIMAL(3, 2) DEFAULT 0.00,
-    rate_count INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (seller_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -38,8 +36,9 @@ CREATE TABLE products (
 );
 
 CREATE TABLE additional_info (
-    id INT PRIMARY KEY AUTO_INCREMENT,
+    info_index INT NOT NULL,
     product_id INT NOT NULL,
+    PRIMARY KEY (info_index, product_id),
     title VARCHAR(255) NOT NULL,
     description VARCHAR(1024) NOT NULL,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
@@ -47,22 +46,22 @@ CREATE TABLE additional_info (
 );
 
 CREATE TABLE product_images (
-    id INT PRIMARY KEY AUTO_INCREMENT,
+    image_index INT NOT NULL,
     product_id INT NOT NULL,
+    PRIMARY KEY (image_index, product_id),
     image_url VARCHAR(2048),
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
     INDEX idx_product_id (product_id)
 );
 
 CREATE TABLE ratings (
-    id INT PRIMARY KEY AUTO_INCREMENT,
     product_id INT NOT NULL,
     user_id INT NOT NULL,
+    PRIMARY KEY (product_id, user_id),
     score INT NOT NULL CHECK (score >= 1 AND score <= 5),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_rating (product_id, user_id),
     INDEX idx_product_id (product_id),
     INDEX idx_user_id (user_id)
 );

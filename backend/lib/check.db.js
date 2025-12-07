@@ -1,17 +1,11 @@
 import net from 'net';
-import readline from 'readline';
-
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
 
 // Check if MySQL port is available
-async function isMySQLRunning(port = 3306) {
+async function isMySQLRunning(host = 'localhost', port = 3306) {
     return new Promise((resolve) => {
         const socket = new net.Socket();
         
-        socket.setTimeout(1000);
+        socket.setTimeout(2000);
         socket.on('connect', () => {
             socket.destroy();
             resolve(true);
@@ -26,42 +20,34 @@ async function isMySQLRunning(port = 3306) {
             resolve(false);
         });
         
-        socket.connect(port, 'localhost');
+        socket.connect(port, host);
     });
 }
 
-// Prompt user to start MySQL
-async function promptForMySQL() {
-    console.log('\n⚠️  MySQL is not running!');
-    console.log('\nPlease start XAMPP:');
-    console.log('1. Open XAMPP Control Panel');
-    console.log('2. Click "Start" next to MySQL');
-    console.log('3. Wait for it to turn green\n');
+// Check MySQL with retry (Docker-friendly)
+export async function ensureMySQLRunning(maxAttempts = 30) {
+    const host = process.env.DB_HOST || 'localhost';
+    const port = parseInt(process.env.DB_PORT || '3306');
     
-    return new Promise((resolve) => {
-        rl.question('Press Enter when MySQL is running...', () => {
-            rl.close();
-            resolve();
-        });
-    });
-}
-
-// Check MySQL with retry
-export async function ensureMySQLRunning(maxAttempts = 3) {
+    console.log(`Attempting to connect to MySQL at ${host}:${port}...`);
+    
     for (let i = 0; i < maxAttempts; i++) {
-        const isRunning = await isMySQLRunning();
+        const isRunning = await isMySQLRunning(host, port);
         
         if (isRunning) {
-            return true;
+            console.log(`✓ MySQL is running at ${host}:${port}!`);
+            return { success: true, port };
         }
         
-        if (i === 0) {
-            await promptForMySQL();
-        } else {
-            console.log(`Checking again... (Attempt ${i + 1}/${maxAttempts})`);
-            await new Promise(r => setTimeout(r, 2000));
-        }
+        console.log(`Waiting for MySQL... (${i + 1}/${maxAttempts})`);
+        await new Promise(r => setTimeout(r, 2000));
     }
     
-    return false;
+    console.error(`❌ Could not connect to MySQL at ${host}:${port} after ${maxAttempts} attempts`);
+    console.error('Please check:');
+    console.error('- Is the MySQL container running? (docker ps)');
+    console.error('- Are environment variables correct in docker-compose.yml?');
+    console.error('- Is port 3306 available on the host?');
+    
+    return { success: false, port: null };
 }

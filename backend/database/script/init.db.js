@@ -24,7 +24,7 @@ async function initDatabase() {
             multipleStatements: true
         });
         
-        console.log('✓ Connected to MySQL');
+        console.log('Connected to MySQL');
         
         // Check if database exists and drop it
         console.log('Checking for existing database...');
@@ -33,9 +33,9 @@ async function initDatabase() {
         );
         
         if (databases.length > 0) {
-            console.log('✓ Found existing mern_db, dropping...');
+            console.log('Found existing mern_db, dropping...');
             await connection.query('DROP DATABASE mern_db');
-            console.log('✓ Database dropped');
+            console.log('Database dropped');
         } else {
             console.log('ℹ No existing database found');
         }
@@ -44,21 +44,21 @@ async function initDatabase() {
         const schemaPath = join(__dirname, '../', 'schema.sql');
         const schema = await fs.readFile(schemaPath, 'utf8');
         await connection.query(schema);
-        console.log('✓ Schema created');
+        console.log('Schema created');
         
         // Load seed data (optional)
         try {
             const seedPath = join(__dirname, '../', 'sample.sql');
             const seed = await fs.readFile(seedPath, 'utf8');
             await connection.query(seed);
-            console.log('✓ Seed data inserted');
+            console.log('Seed data inserted');
         } catch (error) {
-            console.log('ℹ No seed data found (optional)');
+            console.log('No seed data found (optional)', error);
         }
         
         // Verify tables
         const [tables] = await connection.query('SHOW TABLES');
-        console.log(`✓ Created ${tables.length} table(s)`);
+        console.log(`Created ${tables.length} table(s)`);
         
         console.log('\n✅ Database initialization complete!\n');
         

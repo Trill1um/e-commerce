@@ -65,7 +65,8 @@ export function useAllProcessedProducts({ filters = {}, sortBy, isDescending } =
     return useQuery({
     queryKey: productQueryKeys.all(params),
     queryFn: () => fetchAllProcessedProducts(params),
-    staleTime: Infinity,
+    staleTime: 0, // Allow refetching when invalidated
+    gcTime: 0, // Don't keep cache when component unmounts
     onError: (error) => {
       console.error("Error fetching all products:", error);
       toast.error("Failed to fetch products");
@@ -77,7 +78,8 @@ export function useSellerProcessedProducts() {
     return useQuery({
     queryKey: productQueryKeys.seller,
     queryFn: fetchSellerProducts,
-    staleTime: Infinity,
+    staleTime: 0, // Allow refetching when invalidated
+    gcTime: 0, // Don't keep cache when component unmounts
     onError: (error) => {
       console.error("Error fetching all products:", error);
       toast.error("Failed to fetch products");
@@ -190,14 +192,20 @@ export function useInvalidateProducts() {
   const queryClient = useQueryClient();
 
   return {
-    invalidateAll: () => {
-      // Invalidate all queries that start with ["products"]
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: productQueryKeys.seller });
+    invalidateAll: async () => {
+      // Invalidate and refetch all queries that start with ["products"]
+      await queryClient.invalidateQueries({ 
+        queryKey: ["products"],
+        refetchType: 'active' // Refetch all active queries
+      });
+      await queryClient.invalidateQueries({ 
+        queryKey: productQueryKeys.seller,
+        refetchType: 'active'
+      });
     },
-    refetchAll: () => {
-      queryClient.refetchQueries({ queryKey: ["products"] });
-      queryClient.refetchQueries({ queryKey: productQueryKeys.seller });
+    refetchAll: async () => {
+      await queryClient.refetchQueries({ queryKey: ["products"] });
+      await queryClient.refetchQueries({ queryKey: productQueryKeys.seller });
     },
   };
 }

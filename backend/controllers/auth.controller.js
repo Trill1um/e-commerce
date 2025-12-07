@@ -204,7 +204,6 @@ export const logout = async (req, res) => {
 
 export const deleteAccount = async (req, res) => {
   try {
-    console.log("user: ", req.user)
     const userId = req.user.id;
     await User.delete(userId);
 

@@ -1,4 +1,4 @@
-import pool from '../lib/db.js';
+import { getPool } from '../lib/db.js';
 
 class Rating {
   
@@ -7,7 +7,7 @@ class Rating {
     const { productId, userId } = filter;
     const { rating } = update.$set || {};
     
-    const connection = await pool.getConnection();
+    const connection = await getPool().getConnection();
     
     try {
       // Check if rating exists
@@ -53,7 +53,7 @@ class Rating {
   static async find(filter) {
     const { productId, userId } = filter;
     
-    let query = 'SELECT id, product_id as productId, user_id as userId, score as rating FROM ratings WHERE 1=1';
+    let query = 'SELECT product_id as productId, user_id as userId FROM ratings WHERE 1=1';
     const params = [];
     
     if (productId !== undefined) {
@@ -66,7 +66,7 @@ class Rating {
       params.push(userId);
     }
     
-    const [rows] = await pool.execute(query, params);
+    const [rows] = await getPool().execute(query, params);
     return rows;
   }
   
@@ -74,7 +74,7 @@ class Rating {
   static async findOneAndDelete(filter) {
     const { productId, userId } = filter;
     
-    const [result] = await pool.execute(
+    const [result] = await getPool().execute(
       'DELETE FROM ratings WHERE product_id = ? AND user_id = ?',
       [productId, userId]
     );

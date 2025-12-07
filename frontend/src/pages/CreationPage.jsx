@@ -88,8 +88,18 @@ const CreationPage = ({user}) => {
   const navigate = useNavigate();
 
   // Form state
-  const [formData, setFormData] = useState(
-    product || {
+  const [formData, setFormData] = useState(() => {
+    if (product) {
+      // Ensure all additionalInfo items have a unique id
+      return {
+        ...product,
+        additionalInfo: (product.additionalInfo || []).map((info) => ({
+          ...info,
+          id: info.id || Date.now() + Math.random(), // Add id if missing
+        })),
+      };
+    }
+    return {
       name: "",
       description: "",
       price: "",
@@ -98,8 +108,8 @@ const CreationPage = ({user}) => {
       isLimited: false,
       inStock: true,
       additionalInfo: [],
-    }
-  );
+    };
+  });
   // Scroll tracking state
   const [categoryScrollState, setCategoryScrollState] = useState({
     canScrollLeft: false,

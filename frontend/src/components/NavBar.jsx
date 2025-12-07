@@ -38,6 +38,10 @@ const ProfileSection = ({ user }) => {
         // Navigate to product page or handle action
         navigate("/SellerPage");
         break;
+      case "admin":
+        // Navigate to product page or handle action
+        navigate("/admin");
+        break;
       case "logout":
         // Handle logout
         logout();
@@ -76,6 +80,14 @@ const ProfileSection = ({ user }) => {
         {isDropdownOpen && (
           <div className="overflow-hidden absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 z-50">
             <div className="py-2">
+              {user.role === "admin" && (
+                <button
+                  onClick={() => handleMenuItemClick("admin")}
+                  className="btn-anim w-full text-left px-4 py-3 text-gray-700 hover:bg-yellow-50 hover:text-yellow-800 transition-colors duration-150 font-medium"
+                >
+                  Go to Admin Page
+                </button>
+              )}
               {user.role === "seller" && (
                 <button
                   onClick={() => handleMenuItemClick("product")}
@@ -91,13 +103,17 @@ const ProfileSection = ({ user }) => {
               >
                 Log Out
               </button>
-              <hr className="my-1 border-gray-200" />
-              <button
-                onClick={() => handleMenuItemClick("delete")}
-                className="btn-anim w-full text-left px-4 py-3 text-red-800 hover:bg-red-100 transition-colors duration-150 font-medium"
-              >
-                Delete Account
-              </button>
+              {user.role !== "admin" &&
+                <>
+                  <hr className="my-1 border-gray-200" />
+                  <button
+                    onClick={() => handleMenuItemClick("delete")}
+                    className="btn-anim w-full text-left px-4 py-3 text-red-800 hover:bg-red-100 transition-colors duration-150 font-medium"
+                    >
+                    Delete Account
+                  </button>
+                </>
+              }
             </div>
           </div>
         )}
@@ -119,8 +135,6 @@ const NavBar = ({ user }) => {
   const location = useLocation();
   const path = location.pathname;
   const navigate = useNavigate();
-  const isLoading = useUserStore((s) => s.loading);
-  // const debugVerification = useUserStore((s) => s.debugVerification);
   // test
 
   return (
