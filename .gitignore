@@ -4,4 +4,3 @@
 /env_copies
 
 **/node_modules
-**/.dockerignore
