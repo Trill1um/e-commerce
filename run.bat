@@ -1,5 +1,17 @@
-@REM @echo off
-@REM start cmd /c "cd /d %~dp0backend && npm install && npm run dev"
-@REM start cmd /c "cd /d %~dp0frontend && npm install && npm run dev"
+@echo off
+echo Starting Docker containers...
+docker-compose up -d
 
-docker-compose up
+echo Waiting for frontend to be ready...
+timeout /t 10 /nobreak >nul
+
+:check
+curl -s http://localhost:5173 >nul 2>&1
+if errorlevel 1 (
+    timeout /t 2 /nobreak >nul
+    goto check
+)
+
+start http://localhost:5173
+
+docker-compose logs -f

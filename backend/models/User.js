@@ -32,7 +32,7 @@ class User {
     }
     
     const [result] = await getPool().execute(
-      'INSERT INTO users (colony_name, email, password, role) VALUES (?, ?, ?, ?)',
+      'INSERT INTO USER (colony_name, email, password, role) VALUES (?, ?, ?, ?)',
       [colonyName || null, email.trim(), hashedPassword, role || null]
     );
     
@@ -42,7 +42,7 @@ class User {
   // Find by email
   static async findByEmail(email) {
     const [rows] = await getPool().execute(
-      'SELECT * FROM users WHERE email = ?',
+      'SELECT * FROM USER WHERE email = ?',
       [email]
     );
     return rows[0];
@@ -51,7 +51,7 @@ class User {
   // Find by ID
   static async findById(id) {
     const [rows] = await getPool().execute(
-      'SELECT * FROM users WHERE id = ?',
+      'SELECT * FROM USER WHERE id = ?',
       [id]
     );
     return rows[0];
@@ -59,15 +59,15 @@ class User {
 
   static async findByIdNoPassword(id) {
     const [rows] = await getPool().execute(
-      'SELECT id, colony_name, email, role, created_at, updated_at FROM users WHERE id = ?',
+      'SELECT id, colony_name, email, role, created_at, updated_at FROM USER WHERE id = ?',
       [id]
     );
     return rows[0];
   }
   
-  // Find all users
+  // Find all USER
   static async findAll(filters = {}) {
-    let query = 'SELECT * FROM users WHERE 1=1';
+    let query = 'SELECT * FROM USER WHERE 1=1';
     const params = [];
     
     if (filters.role) {
@@ -138,14 +138,14 @@ class User {
     values.push(id);
     
     await getPool().execute(
-      `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
+      `UPDATE USER SET ${updates.join(', ')} WHERE id = ?`,
       values
     );
   }
   
   // Delete user
   static async delete(id) {
-    await getPool().execute('DELETE FROM users WHERE id = ?', [id]);
+    await getPool().execute('DELETE FROM USER WHERE id = ?', [id]);
   }
 }
 

@@ -1,30 +1,27 @@
-import { useState, useEffect } from 'react';
-import axios from '../lib/axios';
+import { useEffect } from 'react';
+import { useAdminStore } from '../stores/useAdminStore';
 
 const Admin = () => {
-  const [tables] = useState(['users', 'products', 'product_images', 'additional_info', 'ratings']);
-  const [activeTable, setActiveTable] = useState('users');
-  const [tableData, setTableData] = useState({ data: [], columns: [] });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const { 
+    tables, 
+    activeTable, 
+    tableData, 
+    loading, 
+    error, 
+    fetchTables,
+    setActiveTable,
+    clearError 
+  } = useAdminStore();
 
   useEffect(() => {
-    fetchTableData(activeTable);
-  }, [activeTable]);
+    fetchTables();
+  }, [fetchTables]);
 
-  const fetchTableData = async (tableName) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await axios.get(`/admin/table/${tableName}`);
-      setTableData(response.data);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to fetch table data');
-      console.error('Error fetching table:', err);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (tables.length > 0 && !activeTable) {
+      setActiveTable(tables[0]);
     }
-  };
+  }, [tables, activeTable, setActiveTable]);
 
   const formatValue = (value) => {
     if (value === null) return <span className="text-gray-400">NULL</span>;
@@ -44,34 +41,42 @@ const Admin = () => {
         </div>
 
         {/* Table Selection Buttons */}
-        <div className="flex flex-wrap gap-3 mb-6">
-          {tables.map((table) => (
-            <button
-              key={table}
-              onClick={() => setActiveTable(table)}
-              className={`px-6 btn-anim py-3 rounded-lg font-medium transition-all duration-200 ${
-                activeTable === table
-                  ? 'bg-amber-500 text-white shadow-lg scale-105'
-                  : 'bg-white text-gray-700 hover:bg-amber-100 border border-gray-200'
-              }`}
-            >
-              {table}
-            </button>
-          ))}
-        </div>
+        {tables.length > 0 && (
+          <div className="flex flex-wrap gap-3 mb-6">
+            {tables.map((table) => (
+              <button
+                key={table}
+                onClick={() => setActiveTable(table)}
+                className={`px-6 btn-anim py-3 rounded-lg font-medium transition-all duration-200 ${
+                  activeTable === table
+                    ? 'bg-amber-500 text-white shadow-lg scale-105'
+                    : 'bg-white text-gray-700 hover:bg-amber-100 border border-gray-200'
+                }`}
+              >
+                {table}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Loading State */}
         {loading && (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-amber-500 border-t-transparent"></div>
-            <p className="mt-4 text-gray-600">Loading {activeTable}...</p>
+            <p className="mt-4 text-gray-600">Loading {activeTable || 'data'}...</p>
           </div>
         )}
 
         {/* Error State */}
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
-            {error}
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg flex justify-between items-center">
+            <span>{error}</span>
+            <button 
+              onClick={clearError}
+              className="text-red-700 hover:text-red-900 font-bold"
+            >
+              ✕
+            </button>
           </div>
         )}
 
@@ -133,7 +138,7 @@ const Admin = () => {
         )}
 
         {/* Empty State */}
-        {!loading && !error && tableData.data.length === 0 && (
+        {!loading && !error && tableData.data.length === 0 && activeTable && (
           <div className="bg-white rounded-xl shadow-lg p-12 text-center border border-gray-200">
             <div className="text-6xl mb-4">📭</div>
             <h3 className="text-xl font-bold text-gray-700 mb-2">No Data Found</h3>

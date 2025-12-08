@@ -12,7 +12,7 @@ class Rating {
     try {
       // Check if rating exists
       const [existing] = await connection.execute(
-        'SELECT * FROM ratings WHERE product_id = ? AND user_id = ?',
+        'SELECT * FROM RATING WHERE product_id = ? AND user_id = ?',
         [productId, userId]
       );
       
@@ -21,7 +21,7 @@ class Rating {
       if (existing.length > 0) {
         // Update existing rating
         await connection.execute(
-          'UPDATE ratings SET score = ? WHERE product_id = ? AND user_id = ?',
+          'UPDATE RATING SET score = ? WHERE product_id = ? AND user_id = ?',
           [rating, productId, userId]
         );
         
@@ -32,7 +32,7 @@ class Rating {
       } else {
         // Insert new rating
         await connection.execute(
-          'INSERT INTO ratings (product_id, user_id, score) VALUES (?, ?, ?)',
+          'INSERT INTO RATING (product_id, user_id, score) VALUES (?, ?, ?)',
           [productId, userId, rating]
         );
         
@@ -53,7 +53,7 @@ class Rating {
   static async find(filter) {
     const { productId, userId } = filter;
     
-    let query = 'SELECT product_id as productId, user_id as userId FROM ratings WHERE 1=1';
+    let query = 'SELECT product_id as productId, user_id as userId FROM RATING WHERE 1=1';
     const params = [];
     
     if (productId !== undefined) {
@@ -75,7 +75,7 @@ class Rating {
     const { productId, userId } = filter;
     
     const [result] = await getPool().execute(
-      'DELETE FROM ratings WHERE product_id = ? AND user_id = ?',
+      'DELETE FROM RATING WHERE product_id = ? AND user_id = ?',
       [productId, userId]
     );
     

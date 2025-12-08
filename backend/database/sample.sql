@@ -2,15 +2,15 @@ USE mern_db;
 
 -- Clear existing data
 SET FOREIGN_KEY_CHECKS = 0;
-TRUNCATE TABLE ratings;
-TRUNCATE TABLE product_images;
-TRUNCATE TABLE additional_info;
-TRUNCATE TABLE products;
-TRUNCATE TABLE users;
+TRUNCATE TABLE RATING;
+TRUNCATE TABLE IMAGE;
+TRUNCATE TABLE INFO;
+TRUNCATE TABLE PRODUCT;
+TRUNCATE TABLE USER;
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- Insert Users (3 sellers, 5 buyers)
-INSERT INTO users (colony_name, email, password, role) VALUES
+INSERT INTO USER (colony_name, email, password, role) VALUES
 -- Admin
 (NULL, 'admin@gmail.com', '$2a$10$WwGexaJyRLZ0lqzU5iuntO2PL/6bE3YbvYidD4gy.xOnv23X6hcaG', 'admin'),
 -- Sellers
@@ -25,7 +25,7 @@ INSERT INTO users (colony_name, email, password, role) VALUES
 (NULL, 'organic.seeker@beehive.com', '$2b$10$rZ8qX9YvH2kL3pN4mW6tXeJ5fK8gH2pQ7vN9mL3xR4yS5tU6vW7zA', 'buyer');
 
 -- Products from Seller 1 (Golden Hive Co.)
-INSERT INTO products (seller_id, name, description, price, category, is_limited, in_stock) VALUES
+INSERT INTO PRODUCT (seller_id, name, description, price, category, is_limited, in_stock) VALUES
 (1, 'Wildflower Honey 500g', 'Pure organic wildflower honey harvested from local meadows. Rich, amber color with a complex floral taste profile.', 18.99, 'Food', FALSE, TRUE),
 (1, 'Raw Honeycomb', 'Authentic honeycomb straight from the hive. Perfect for cheese boards and natural sweetness.', 24.99, 'Food', TRUE, TRUE),
 (1, 'Honey & Lavender Tea', 'Artisan blend of honey-infused black tea with dried lavender flowers. Calming and delicious.', 12.50, 'Drinks', FALSE, TRUE),
@@ -33,14 +33,14 @@ INSERT INTO products (seller_id, name, description, price, category, is_limited,
 (1, 'Bee Logo T-Shirt', 'Organic cotton t-shirt featuring our signature golden bee logo. Comfortable and sustainable.', 28.00, 'Clothes', FALSE, TRUE);
 
 -- Products from Seller 2 (Sweet Nectar Farm)
-INSERT INTO products (seller_id, name, description, price, category, is_limited, in_stock) VALUES
+INSERT INTO PRODUCT (seller_id, name, description, price, category, is_limited, in_stock) VALUES
 (2, 'Manuka Honey 250g', 'Premium MGO 400+ Manuka honey from New Zealand. Known for unique antibacterial properties.', 45.00, 'Food', TRUE, TRUE),
 (2, 'Honeyed Almonds', 'Roasted almonds glazed with organic honey and a hint of sea salt. Addictively crunchy.', 15.99, 'Food', FALSE, TRUE),
 (2, 'Honey Lemon Kombucha', 'Probiotic-rich kombucha sweetened naturally with raw honey and fresh lemon juice.', 6.99, 'Drinks', FALSE, TRUE),
 (2, 'Propolis Tincture', 'Concentrated bee propolis extract. Natural immune support in a convenient dropper bottle.', 22.50, 'Other', FALSE, TRUE);
 
 -- Products from Seller 3 (Buzzing Artisans)
-INSERT INTO products (seller_id, name, description, price, category, is_limited, in_stock) VALUES
+INSERT INTO PRODUCT (seller_id, name, description, price, category, is_limited, in_stock) VALUES
 (3, 'Honey Mustard Sauce', 'Gourmet honey mustard made with whole grain mustard and local clover honey. Perfect condiment.', 9.99, 'Food', FALSE, TRUE),
 (3, 'Mead (Honey Wine) 750ml', 'Traditional honey wine fermented with champagne yeast. Semi-sweet with 12% ABV.', 28.50, 'Drinks', FALSE, FALSE),
 (3, 'Beekeeper Hat', 'Professional beekeeper hat with protective veil. Essential for any apiarist.', 35.00, 'Accessories', FALSE, TRUE),
@@ -48,7 +48,7 @@ INSERT INTO products (seller_id, name, description, price, category, is_limited,
 (3, 'Honey Face Mask', 'Natural skincare mask with honey, oats, and chamomile. Moisturizing and soothing.', 16.99, 'Other', FALSE, TRUE);
 
 -- Product Images
-INSERT INTO product_images (image_index, product_id, image_url) VALUES
+INSERT INTO IMAGE (image_index, product_id, image_url) VALUES
 -- Wildflower Honey
 (0, 1, 'https://plus.unsplash.com/premium_photo-1663851330122-32e1c17b9334?q=80&w=400'),
 (1, 1, 'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=400'),
@@ -89,7 +89,7 @@ INSERT INTO product_images (image_index, product_id, image_url) VALUES
 (0, 14, 'https://images.unsplash.com/photo-1596755389378-c31d21fd1273?w=400');
 
 -- Additional Info
-INSERT INTO additional_info (info_index, product_id, title, description) VALUES
+INSERT INTO INFO (info_index, product_id, title, description) VALUES
 -- Wildflower Honey
 (0, 1, 'Origin', 'Harvested from diverse wildflower meadows in Oregon'),
 (1, 1, 'Nutritional Benefits', 'Rich in antioxidants, vitamins, and minerals'),
@@ -129,8 +129,8 @@ INSERT INTO additional_info (info_index, product_id, title, description) VALUES
 (1, 14, 'Frequency', 'Use 2-3 times per week for best results'),
 (2, 14, 'Skin Types', 'Suitable for all skin types, especially dry and sensitive');
 
--- Ratings (buyers rating various products)
-INSERT INTO ratings (product_id, user_id, score) VALUES
+-- Ratings (buyers rating various PRODUCT)
+INSERT INTO RATING (product_id, user_id, score) VALUES
 -- Product 1 (Wildflower Honey) ratings
 (1, 4, 5),
 (1, 5, 4),
@@ -163,14 +163,3 @@ INSERT INTO ratings (product_id, user_id, score) VALUES
 (13, 7, 5),
 -- Product 14 (Face Mask) rating
 (14, 5, 4);
-
--- -- Verify data
--- SELECT 'Users:' as Info, COUNT(*) as Count FROM users
--- UNION ALL
--- SELECT 'Products:', COUNT(*) FROM products
--- UNION ALL
--- SELECT 'Product Images:', COUNT(*) FROM product_images
--- UNION ALL
--- SELECT 'Additional Info:', COUNT(*) FROM additional_info
--- UNION ALL
--- SELECT 'Ratings:', COUNT(*) FROM ratings;

@@ -15,6 +15,38 @@ let pool = mysql.createPool({
     queueLimit: 0
 });
 
+// Intercept queries for logging
+const originalExecute = pool.execute.bind(pool);
+pool.execute = async function(sql, params) {
+    const startTime = Date.now();
+    
+    // Replace ? placeholders with actual values for logging
+    let logQuery = sql;
+    if (params && params.length > 0) {
+        let paramIndex = 0;
+        logQuery = sql.replace(/\?/g, () => {
+            const value = params[paramIndex++];
+            if (value === null) return 'NULL';
+            if (typeof value === 'string') return `'${value}'`;
+            if (typeof value === 'boolean') return value ? '1' : '0';
+            return value;
+        });
+    }
+    
+    console.log('\n📊 QUERY:', logQuery);
+    
+    try {
+        const result = await originalExecute(sql, params);
+        const duration = Date.now() - startTime;
+        console.log(`   ✅ SUCCESS (${duration}ms) - Rows: ${result[0]?.length || result[0]?.affectedRows || 0}`);
+        return result;
+    } catch (error) {
+        const duration = Date.now() - startTime;
+        console.log(`   ❌ ERROR (${duration}ms):`, error.message);
+        throw error;
+    }
+};
+
 function createNewPool(port) {
   pool = mysql.createPool({
     host: process.env.DB_HOST || 'localhost',

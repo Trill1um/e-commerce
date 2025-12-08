@@ -23,6 +23,7 @@ services:
       - ecommerce-network
 
   # Backend API
+  
   backend:
     build:
       context: ./backend
@@ -35,6 +36,15 @@ services:
       DB_NAME: mern_db
       DB_PORT: 3306
       PORT: 3000
+      CLOUDINARY_CLOUD_NAME: dcn9hggyd
+      CLOUDINARY_API_KEY: 666817156987834
+      CLOUDINARY_API_SECRET: Xz65J3wOXsskVvonTVzSRXqzInY
+      CLOUDINARY_URL: cloudinary://666817156987834:Xz65J3wOXsskVvonTVzSRXqzInY@dcn9hggyd
+      FRONTEND_DEVELOPMENT_URL: http://localhost:5173
+      REDIS_URL: rediss://default:AWPiAAIncDJkNzRmNWY1NTY3NGQ0YTc2YjkxOThjMWZjOTEzZjJhNXAyMjU1NzA@set-kid-25570.upstash.io:6379
+      ACCESS_TOKEN_SECRET: your_access_token_secret
+      REFRESH_TOKEN_SECRET: your_refresh_token_secret
+      EMAIL_TOKEN_SECRET: your_email_token_secret
     ports:
       - "3000:3000"
     depends_on:
@@ -53,7 +63,7 @@ services:
       dockerfile: Dockerfile
     container_name: ecommerce_frontend
     environment:
-      VITE_API_URL: http://localhost:3000
+      VITE_API_DEVELOPMENT_URL: http://localhost:3000
     ports:
       - "5173:5173"
     depends_on:

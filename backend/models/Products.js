@@ -39,7 +39,7 @@ class Product {
       
       // Insert product
       const [result] = await connection.execute(
-        'INSERT INTO products (seller_id, name, description, price, category, is_limited, in_stock) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO PRODUCT (seller_id, name, description, price, category, is_limited, in_stock) VALUES (?, ?, ?, ?, ?, ?, ?)',
         [sellerId, name.trim(), description.trim(), price, category.trim(), isLimited, inStock]
       );
       
@@ -48,7 +48,7 @@ class Product {
       // Insert images
       for (let i = 0; i < images.length; i++) {
         await connection.execute(
-          'INSERT INTO product_images (image_index, product_id, image_url) VALUES (?, ?, ?)',
+          'INSERT INTO IMAGE (image_index, product_id, image_url) VALUES (?, ?, ?)',
           [i, productId, images[i]]
         );
       }
@@ -58,7 +58,7 @@ class Product {
         let idx=0;
         for (const info of additionalInfo) {
           await connection.execute(
-            'INSERT INTO additional_info (info_index, product_id, title, description) VALUES (?, ?, ?, ?)',
+            'INSERT INTO INFO (info_index, product_id, title, description) VALUES (?, ?, ?, ?)',
             [idx++, productId, info.title || '', info.description || '']
           );
         }
@@ -78,7 +78,7 @@ class Product {
   // Find by ID with images and additional info
   static async findById(id) {
     const [products] = await getPool().execute(
-      'SELECT * FROM products WHERE id = ?',
+      'SELECT * FROM PRODUCT WHERE id = ?',
       [id]
     );
     
@@ -90,14 +90,14 @@ class Product {
     
     // Get images
     const [images] = await getPool().execute(
-      'SELECT image_url FROM product_images WHERE product_id = ? ORDER BY image_index',
+      'SELECT image_url FROM IMAGE WHERE product_id = ? ORDER BY image_index',
       [id]
     );
     product.images = images.map(img => img.image_url);
     
     // Get additional info
     const [additionalInfo] = await getPool().execute(
-      'SELECT title, description FROM additional_info WHERE product_id = ? ORDER BY info_index',
+      'SELECT title, description FROM INFO WHERE product_id = ? ORDER BY info_index',
       [id]
     );
     product.additionalInfo = additionalInfo;
@@ -120,7 +120,7 @@ class Product {
     p.created_at as createdAt, 
     p.updated_at, 
     u.colony_name as colonyName 
-    FROM products as p inner join users as u on u.id=p.seller_id 
+    FROM PRODUCT as p inner join USER as u on u.id=p.seller_id 
     WHERE 1=1
     `
     ;
@@ -159,7 +159,7 @@ class Product {
     }
     
     const [products] = await getPool().execute(query, params);
-    const [ratings] = await getPool().execute('SELECT r.product_id, ROUND(AVG(r.score),2) as rating, COUNT(*) as count FROM ratings as r GROUP BY r.product_id;');
+    const [ratings] = await getPool().execute('SELECT r.product_id, ROUND(AVG(r.score),2) as rating, COUNT(*) as count FROM RATING as r GROUP BY r.product_id;');
     
     // Convert ratings array to dictionary
     const ratingsMap = {};
@@ -181,13 +181,13 @@ class Product {
       }
     
       const [images] = await getPool().execute(
-        'SELECT image_url FROM product_images WHERE product_id = ? ORDER BY image_index',
+        'SELECT image_url FROM IMAGE WHERE product_id = ? ORDER BY image_index',
         [product.id]
       );
       product.images = images.map(img => img.image_url);
       
       const [additionalInfo] = await getPool().execute(
-        'SELECT title, description FROM additional_info WHERE product_id = ? ORDER BY info_index',
+        'SELECT title, description FROM INFO WHERE product_id = ? ORDER BY info_index',
         [product.id]
       ); 
       product.additionalInfo = additionalInfo;
@@ -243,17 +243,17 @@ class Product {
       if (updates.length > 0) {
         values.push(id);
         await connection.execute(
-          `UPDATE products SET ${updates.join(', ')} WHERE id = ?`,
+          `UPDATE PRODUCT SET ${updates.join(', ')} WHERE id = ?`,
           values
         );
       }
       
       // Update images if provided
       if (data.images && Array.isArray(data.images)) {
-        await connection.execute('DELETE FROM product_images WHERE product_id = ?', [id]);
+        await connection.execute('DELETE FROM IMAGE WHERE product_id = ?', [id]);
         for (let i = 0; i < data.images.length; i++) {
           await connection.execute(
-            'INSERT INTO product_images (image_index, product_id, image_url) VALUES (?, ?, ?)',
+            'INSERT INTO IMAGE (image_index, product_id, image_url) VALUES (?, ?, ?)',
             [i, id, data.images[i]]
           );
         }
@@ -261,11 +261,11 @@ class Product {
       
       // Update additional info if provided
       if (data.additionalInfo && Array.isArray(data.additionalInfo)) {
-        await connection.execute('DELETE FROM additional_info WHERE product_id = ?', [id]);
+        await connection.execute('DELETE FROM INFO WHERE product_id = ?', [id]);
         let idx=0
         for (const info of data.additionalInfo) {
           await connection.execute(
-            'INSERT INTO additional_info (info_index, product_id, title, description) VALUES (?, ?, ?, ?)',
+            'INSERT INTO INFO (info_index, product_id, title, description) VALUES (?, ?, ?, ?)',
             [idx++, id, info.title || '', info.description || '']
           );
         }
@@ -283,7 +283,7 @@ class Product {
   
   // Delete product (cascade handled by foreign keys and trigger)
   static async delete(id) {
-    await getPool().execute('DELETE FROM products WHERE id = ?', [id]);
+    await getPool().execute('DELETE FROM PRODUCT WHERE id = ?', [id]);
   }
 }
 

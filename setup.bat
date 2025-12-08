@@ -3,5 +3,4 @@
 @REM npm run init-db
 @REM pause
 
-docker-compose up --build
-pause
+docker-compose build

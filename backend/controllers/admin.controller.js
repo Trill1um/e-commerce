@@ -6,7 +6,7 @@ export const getTable = async (req, res) => {
     const { tableName } = req.params;
     
     // Whitelist allowed tables for security
-    const allowedTables = ['users', 'products', 'product_images', 'additional_info', 'ratings'];
+    const allowedTables = ['USER', 'PRODUCT', 'IMAGE', 'INFO', 'RATING'];
     
     if (!allowedTables.includes(tableName)) {
       return res.status(400).json({ message: 'Invalid table name' });
@@ -16,7 +16,7 @@ export const getTable = async (req, res) => {
     const [rows] = await getPool().execute(`SELECT * FROM ${tableName}`);
     
     // Get table structure
-    const [columns] = await getPool().execute(`DESCRIBE ${tableName}`);
+    const [columns] = await getPool().execute(`DESC ${tableName}`);
     
     res.json({ 
       data: rows, 
@@ -35,9 +35,9 @@ export const getTable = async (req, res) => {
 // Get list of all tables
 export const getAllTables = async (req, res) => {
   try {
-    const [tables] = await getPool().execute('SHOW TABLES');
-    const tableNames = tables.map(obj => Object.values(obj)[0]);
-    res.json({ tables: tableNames });
+    // Return the friendly table names
+    const tables = ['USER', 'PRODUCT', 'IMAGE', 'INFO', 'RATING'];
+    res.json({ tables });
   } catch (error) {
     console.error('Admin tables list error:', error);
     res.status(500).json({ message: 'Failed to fetch tables list' });
