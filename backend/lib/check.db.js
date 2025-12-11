@@ -24,8 +24,14 @@ async function isMySQLRunning(host = 'localhost', port = 3306) {
     });
 }
 
-// Check MySQL with retry (Docker-friendly)
+// Check MySQL with retry (Docker-friendly, production-optimized)
 export async function ensureMySQLRunning(maxAttempts = 30) {
+    // Skip check in production - Railway/Render MySQL is always ready
+    if (process.env.NODE_ENV === 'production') {
+        console.log('✓ Production mode - skipping MySQL port check');
+        return { success: true, port: null };
+    }
+    
     const host = process.env.DB_HOST || 'localhost';
     const port = parseInt(process.env.DB_PORT || '3306');
     
