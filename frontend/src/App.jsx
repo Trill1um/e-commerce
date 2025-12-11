@@ -27,7 +27,7 @@ const PublicOnlyRoute = ({ children, user }) => {
 };
 
 const SellerOnlyRoute = ({ children, user }) => {
-  return user?.role === 'seller' ? children : <Navigate to="/catalog" replace />;
+  return user?.role === 'seller' || user?.role ==='admin' ? children : <Navigate to="/catalog" replace />;
 }
 
 const AdminOnlyRoute = ({ children, user }) => {
