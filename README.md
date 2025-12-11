@@ -120,9 +120,16 @@ The application implements comprehensive **CRUD operations** across all entities
 * **Bridge Tables:** Both use composite foreign keys `(code, seller_id)` referencing `PRODUCT`
 
 ***
+## Application Launch (Option A)
 
-## 5. Setup and Execution Guide
+* Just click the website link [https://ecommercedbms.netlify.app](https://ecommercedbms.netlify.app)
+* Downsides: Very slow data retrieval due to limited free version for deployment
+* Warning: Might take a while to load for the first time in a while
+* Warning: Might introduce unexpected issues (connections/hosting issues)
 
+## Application Launch (Option B)
+
+### Setup and Execution Guide:
 ### Prerequisites
 
 1. **Docker Desktop:** Must be installed and running
@@ -134,7 +141,6 @@ The application implements comprehensive **CRUD operations** across all entities
    * Ports 3306 (MySQL), 5000 (Backend), 5173 (Frontend) must be available
    * Minimum 4GB RAM recommended for Docker containers
 
-### Application Launch
 
 #### 1. **Ensure Docker Desktop is running**
 
@@ -173,9 +179,8 @@ The application implements comprehensive **CRUD operations** across all entities
 * Reinitializes database with fresh sample data
 * Use when you need a clean slate or database becomes corrupted
 
-### Sample User Accounts
-
-After running `setup.bat` or `reset.bat`, the following test accounts are available:
+## Sample User Accounts
+After accessing the deployed website or after runnning `setup.bat` or `reset.bat`, the following test accounts are available:
 
 **Admin Account:**
 * Email: `admin@email.com`
