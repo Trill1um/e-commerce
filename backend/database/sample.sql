@@ -14,15 +14,15 @@ INSERT INTO USER (colony_name, email, password, role) VALUES
 -- Admin
 (NULL, 'admin@gmail.com', '$2a$10$WwGexaJyRLZ0lqzU5iuntO2PL/6bE3YbvYidD4gy.xOnv23X6hcaG', 'admin'),
 -- Sellers
-('Golden Hive Co.', 'golden.hive@beehive.com', '$2b$10$rZ8qX9YvH2kL3pN4mW6tXeJ5fK8gH2pQ7vN9mL3xR4yS5tU6vW7zA', 'seller'),
-('Sweet Nectar Farm', 'nectar.farm@beehive.com', '$2b$10$rZ8qX9YvH2kL3pN4mW6tXeJ5fK8gH2pQ7vN9mL3xR4yS5tU6vW7zA', 'seller'),
-('Buzzing Artisans', 'buzzing.art@beehive.com', '$2b$10$rZ8qX9YvH2kL3pN4mW6tXeJ5fK8gH2pQ7vN9mL3xR4yS5tU6vW7zA', 'seller'),
+('Golden Hive Co.', 'golden.hive@beehive.com', '$2a$10$AGrE9WP./tppWLbMQOAjXOnEGHCC4LJ.PcI2tNtlFbAqBmTx5Fxk6', 'seller'),
+('Sweet Nectar Farm', 'nectar.farm@beehive.com', '$2a$10$AGrE9WP./tppWLbMQOAjXOnEGHCC4LJ.PcI2tNtlFbAqBmTx5Fxk6', 'seller'),
+('Buzzing Artisans', 'buzzing.art@beehive.com', '$2a$10$AGrE9WP./tppWLbMQOAjXOnEGHCC4LJ.PcI2tNtlFbAqBmTx5Fxk6', 'seller'),
 -- Buyers
-(NULL, 'honey.lover@beehive.com', '$2b$10$rZ8qX9YvH2kL3pN4mW6tXeJ5fK8gH2pQ7vN9mL3xR4yS5tU6vW7zA', 'buyer'),
-(NULL, 'bee.fan@beehive.com', '$2b$10$rZ8qX9YvH2kL3pN4mW6tXeJ5fK8gH2pQ7vN9mL3xR4yS5tU6vW7zA', 'buyer'),
-(NULL, 'sweet.tooth@beehive.com', '$2b$10$rZ8qX9YvH2kL3pN4mW6tXeJ5fK8gH2pQ7vN9mL3xR4yS5tU6vW7zA', 'buyer'),
-(NULL, 'nature.explorer@beehive.com', '$2b$10$rZ8qX9YvH2kL3pN4mW6tXeJ5fK8gH2pQ7vN9mL3xR4yS5tU6vW7zA', 'buyer'),
-(NULL, 'organic.seeker@beehive.com', '$2b$10$rZ8qX9YvH2kL3pN4mW6tXeJ5fK8gH2pQ7vN9mL3xR4yS5tU6vW7zA', 'buyer');
+(NULL, 'honey.lover@beehive.com', '$2a$10$AGrE9WP./tppWLbMQOAjXOnEGHCC4LJ.PcI2tNtlFbAqBmTx5Fxk6', 'buyer'),
+(NULL, 'bee.fan@beehive.com', '$2a$10$AGrE9WP./tppWLbMQOAjXOnEGHCC4LJ.PcI2tNtlFbAqBmTx5Fxk6', 'buyer'),
+(NULL, 'sweet.tooth@beehive.com', '$2a$10$AGrE9WP./tppWLbMQOAjXOnEGHCC4LJ.PcI2tNtlFbAqBmTx5Fxk6', 'buyer'),
+(NULL, 'nature.explorer@beehive.com', '$2a$10$AGrE9WP./tppWLbMQOAjXOnEGHCC4LJ.PcI2tNtlFbAqBmTx5Fxk6', 'buyer'),
+(NULL, 'organic.seeker@beehive.com', '$2a$10$AGrE9WP./tppWLbMQOAjXOnEGHCC4LJ.PcI2tNtlFbAqBmTx5Fxk6', 'buyer');
 
 -- Products from Seller 1 (seller_id=2, Golden Hive Co.)
 -- Seller IDs: 1=admin, 2=Golden Hive, 3=Sweet Nectar, 4=Buzzing Artisans

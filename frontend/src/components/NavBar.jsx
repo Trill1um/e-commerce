@@ -88,7 +88,7 @@ const ProfileSection = ({ user }) => {
                   Go to Admin Page
                 </button>
               )}
-              {user.role === "seller" || user.role==="admin" &&  (
+              {(user.role.trim() === "seller" || user.role.trim()==="admin") &&  (
                 <button
                   onClick={() => handleMenuItemClick("product")}
                   className="btn-anim w-full text-left px-4 py-3 text-gray-700 hover:bg-yellow-50 hover:text-yellow-800 transition-colors duration-150 font-medium"

@@ -9,7 +9,6 @@ This project was developed to meet the following objectives of the **IT 211: Dat
 * **Demonstrate understanding of database concepts and design.** Implementation of ERD, composite primary keys (weak entity relationships), and normalization principles.
 * **Apply knowledge of SQL, CRUD operations, and relational databases.** Full Create, Read, Update, Delete functionality across all entities with complex JOIN queries.
 * **Develop a functional system with a user-friendly interface.** Intuitive React-based GUI with seamless navigation and user-centered design principles.
-* **Encourage integration of problem-solving, system analysis, and design skills.** Real-world e-commerce solution implementing role-based access control, authentication, and the synthetic ID abstraction layer.
 
 ***
 

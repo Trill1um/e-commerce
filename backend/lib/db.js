@@ -3,13 +3,36 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Parse DATABASE_URL if provided (Railway/PlanetScale format)
+const getDatabaseConfig = () => {
+    if (process.env.DATABASE_URL) {
+        try {
+            const url = new URL(process.env.DATABASE_URL);
+            return {
+                host: url.hostname,
+                port: parseInt(url.port) || 3306,
+                user: url.username,
+                password: url.password,
+                database: url.pathname.slice(1), // Remove leading /
+            };
+        } catch (error) {
+            console.error('Error parsing DATABASE_URL:', error);
+        }
+    }
+    
+    // Fallback to individual environment variables
+    return {
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        database: process.env.DB_NAME || 'mern_db',
+        port: parseInt(process.env.DB_PORT) || 3306,
+    };
+};
+
 // Create connection pool
 let pool = mysql.createPool({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'mern_db',
-    port: process.env.DB_PORT || 3306,
+    ...getDatabaseConfig(),
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0

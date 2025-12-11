@@ -38,7 +38,7 @@ export const protectRoute = async (req, res, next) => {
 export const sellerRoute = async (req, res, next) => {
   try {
     // console.log("Seller route accessed by user:", req.user?.colonyName);
-    if (req.user.role !== "seller" || req.user.role !== "admin") {
+    if (req.user.role !== "seller" && req.user.role !== "admin") {
       return res.status(403).json({ message: "Forbidden - Sellers Only" });
     }
     next();
