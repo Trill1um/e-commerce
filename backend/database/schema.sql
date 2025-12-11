@@ -19,8 +19,8 @@ CREATE TABLE USER (
 );
 
 CREATE TABLE PRODUCT (
-    id INT PRIMARY KEY AUTO_INCREMENT,
     seller_id INT NOT NULL,
+    code INT AUTO_INCREMENT,
     name VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     price DECIMAL(10, 2) NOT NULL CHECK (price >= 0),
@@ -30,6 +30,7 @@ CREATE TABLE PRODUCT (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (seller_id) REFERENCES USER(id) ON DELETE CASCADE,
+    PRIMARY KEY (code, seller_id),
     INDEX idx_seller_id (seller_id),
     INDEX idx_category (category),
     INDEX idx_price (price)
@@ -37,31 +38,34 @@ CREATE TABLE PRODUCT (
 
 CREATE TABLE INFO (
     info_index INT NOT NULL,
-    product_id INT NOT NULL,
-    PRIMARY KEY (info_index, product_id),
+    seller_id INT NOT NULL,
+    code INT NOT NULL,
     title VARCHAR(255) NOT NULL,
     description VARCHAR(1024) NOT NULL,
-    FOREIGN KEY (product_id) REFERENCES PRODUCT(id) ON DELETE CASCADE,
-    INDEX idx_product_id (product_id)
+    FOREIGN KEY (code, seller_id) REFERENCES PRODUCT(code, seller_id) ON DELETE CASCADE,
+    PRIMARY KEY (info_index, code, seller_id),
+    INDEX idx_product_id (code, seller_id)
 );
 
 CREATE TABLE IMAGE (
     image_index INT NOT NULL,
-    product_id INT NOT NULL,
-    PRIMARY KEY (image_index, product_id),
+    seller_id INT NOT NULL,
+    code INT NOT NULL,
+    FOREIGN KEY (code, seller_id) REFERENCES PRODUCT(code, seller_id) ON DELETE CASCADE,
+    PRIMARY KEY (image_index, code, seller_id),
     image_url VARCHAR(2048),
-    FOREIGN KEY (product_id) REFERENCES PRODUCT(id) ON DELETE CASCADE,
-    INDEX idx_product_id (product_id)
+    INDEX idx_product_id (code, seller_id)
 );
 
 CREATE TABLE RATING (
-    product_id INT NOT NULL,
+    seller_id INT NOT NULL,
+    code INT NOT NULL,
     user_id INT NOT NULL,
-    PRIMARY KEY (product_id, user_id),
     score INT NOT NULL CHECK (score >= 1 AND score <= 5),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (product_id) REFERENCES PRODUCT(id) ON DELETE CASCADE,
+    FOREIGN KEY (code, seller_id) REFERENCES PRODUCT(code, seller_id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES USER(id) ON DELETE CASCADE,
-    INDEX idx_product_id (product_id),
+    PRIMARY KEY (code, seller_id, user_id),
+    INDEX idx_product_id (code, seller_id),
     INDEX idx_user_id (user_id)
 );

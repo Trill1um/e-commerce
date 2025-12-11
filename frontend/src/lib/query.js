@@ -78,11 +78,13 @@ export function useSellerProcessedProducts() {
     return useQuery({
     queryKey: productQueryKeys.seller,
     queryFn: fetchSellerProducts,
-    staleTime: 0, // Allow refetching when invalidated
+    staleTime: 0, // Always consider data stale
     gcTime: 0, // Don't keep cache when component unmounts
+    refetchOnWindowFocus: true, // Refetch when window regains focus
+    refetchOnMount: true, // Always refetch on mount
     onError: (error) => {
-      console.error("Error fetching all products:", error);
-      toast.error("Failed to fetch products");
+      console.error("Error fetching seller products:", error);
+      toast.error("Failed to fetch seller products");
     },
   });
 }
@@ -137,13 +139,15 @@ export function useDeleteProduct() {
 
   return useMutation({
     mutationFn: deleteProduct,
-    onSuccess: () => {
-      // Invalidate all products cache to refetch fresh data
-      queryClient.invalidateQueries({
+    onSuccess: async () => {
+      // Invalidate and wait for refetch
+      await queryClient.invalidateQueries({
         queryKey: ["products"],
+        refetchType: 'active'
       });
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: productQueryKeys.seller,
+        refetchType: 'active'
       });
 
       toast.success("Product deleted successfully!");

@@ -16,7 +16,7 @@ import ClothesIcon from "../assets/hoodie.svg?react";
 import OtherIcon from "../assets/other.svg?react";
 import placeholder from "../assets/placeholder.png";
 
-const SellerProducts = ({ user }) => {
+const SellerProducts = () => {
   const navigate = useNavigate();
   // Icon variables - replace these with your preferred icons/assets
   const ICONS = {

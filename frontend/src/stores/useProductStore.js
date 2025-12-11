@@ -214,7 +214,7 @@ export function useProductById(productId) {
   const { rawProducts, isLoading, error } = useProcessedProducts();
   
   // Don't conditionally return - always return an object
-  const product = productId ? rawProducts.find(p => p.id === parseInt(productId)) : null;
+  const product = productId ? rawProducts.find(p => p.id === (productId)) : null;
   
   return {
     product: product || null,

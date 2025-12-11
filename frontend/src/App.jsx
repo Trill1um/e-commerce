@@ -73,7 +73,7 @@ function App() {
               element={
                 <ProtectedRoute user={user}>
                   <SellerOnlyRoute user={user}>
-                    <SellerPage user={user} />
+                    <SellerPage />
                   </SellerOnlyRoute>
                 </ProtectedRoute>
               }

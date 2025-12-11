@@ -9,19 +9,31 @@ const Admin = () => {
     loading, 
     error, 
     fetchTables,
+    fetchTableData,
     setActiveTable,
-    clearError 
+    clearError
   } = useAdminStore();
 
   useEffect(() => {
+    // Fetch tables on mount
     fetchTables();
-  }, [fetchTables]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Runs on navigation and page refresh
 
-  useEffect(() => {
-    if (tables.length > 0 && !activeTable) {
-      setActiveTable(tables[0]);
-    }
-  }, [tables, activeTable, setActiveTable]);
+  // useEffect(() => {
+  //   // Auto-select and fetch first table once tables are loaded
+  //   if (tables.length > 0 && !activeTable) {
+  //     const firstTable = tables[0];
+  //     setActiveTable(firstTable);
+  //     fetchTableData(firstTable);
+  //   }
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [tables]);
+
+  const handleTableClick = (tableName) => {
+    setActiveTable(tableName);
+    fetchTableData(tableName);
+  };
 
   const formatValue = (value) => {
     if (value === null) return <span className="text-gray-400">NULL</span>;
@@ -46,7 +58,7 @@ const Admin = () => {
             {tables.map((table) => (
               <button
                 key={table}
-                onClick={() => setActiveTable(table)}
+                onClick={() => handleTableClick(table)}
                 className={`px-6 btn-anim py-3 rounded-lg font-medium transition-all duration-200 ${
                   activeTable === table
                     ? 'bg-amber-500 text-white shadow-lg scale-105'

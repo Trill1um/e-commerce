@@ -2,6 +2,20 @@ import { getPool } from '../lib/db.js';
 
 class Product {
   
+  // Create synthetic ID from seller_id and code
+  static createSyntheticId(sellerId, code) {
+    return `${sellerId}-${code}`;
+  }
+  
+  // Parse synthetic ID to get seller_id and code
+  static parseSyntheticId(id) {
+    const parts = id.split('-');
+    return {
+      sellerId: parseInt(parts[0]),
+      code: parseInt(parts[1])
+    };
+  }
+  
   // Validate product fields
   static validateFields(data) {
     if (!data.name || data.name.trim().length === 0) {
@@ -43,13 +57,13 @@ class Product {
         [sellerId, name.trim(), description.trim(), price, category.trim(), isLimited, inStock]
       );
       
-      const productId = result.insertId;
+      const code = result.insertId;
       
       // Insert images
       for (let i = 0; i < images.length; i++) {
         await connection.execute(
-          'INSERT INTO IMAGE (image_index, product_id, image_url) VALUES (?, ?, ?)',
-          [i, productId, images[i]]
+          'INSERT INTO IMAGE (image_index, code, seller_id, image_url) VALUES (?, ?, ?, ?)',
+          [i, code, sellerId, images[i]]
         );
       }
       
@@ -58,14 +72,14 @@ class Product {
         let idx=0;
         for (const info of additionalInfo) {
           await connection.execute(
-            'INSERT INTO INFO (info_index, product_id, title, description) VALUES (?, ?, ?, ?)',
-            [idx++, productId, info.title || '', info.description || '']
+            'INSERT INTO INFO (info_index, code, seller_id, title, description) VALUES (?, ?, ?, ?, ?)',
+            [idx++, code, sellerId, info.title || '', info.description || '']
           );
         }
       }
       
       await connection.commit();
-      return productId;
+      return this.createSyntheticId(sellerId, code);
       
     } catch (error) {
       await connection.rollback();
@@ -77,9 +91,11 @@ class Product {
 
   // Find by ID with images and additional info
   static async findById(id) {
+    const { sellerId, code } = this.parseSyntheticId(id);
+    
     const [products] = await getPool().execute(
-      'SELECT * FROM PRODUCT WHERE id = ?',
-      [id]
+      'SELECT * FROM PRODUCT WHERE seller_id = ? AND code = ?',
+      [sellerId, code]
     );
     
     if (products.length === 0) {
@@ -87,18 +103,19 @@ class Product {
     }
     
     const product = products[0];
+    product.id = this.createSyntheticId(product.seller_id, product.code);
     
     // Get images
     const [images] = await getPool().execute(
-      'SELECT image_url FROM IMAGE WHERE product_id = ? ORDER BY image_index',
-      [id]
+      'SELECT image_url FROM IMAGE WHERE code = ? AND seller_id = ? ORDER BY image_index',
+      [code, sellerId]
     );
     product.images = images.map(img => img.image_url);
     
     // Get additional info
     const [additionalInfo] = await getPool().execute(
-      'SELECT title, description FROM INFO WHERE product_id = ? ORDER BY info_index',
-      [id]
+      'SELECT title, description FROM INFO WHERE code = ? AND seller_id = ? ORDER BY info_index',
+      [code, sellerId]
     );
     product.additionalInfo = additionalInfo;
     
@@ -109,8 +126,8 @@ class Product {
   static async findAll({filters, sortBy, isDescending} = {}) {
     let query = `
     SELECT 
-    p.id, 
     p.seller_id, 
+    p.code,
     p.name as name, 
     p.description, 
     p.price as price, 
@@ -159,21 +176,26 @@ class Product {
     }
     
     const [products] = await getPool().execute(query, params);
-    const [ratings] = await getPool().execute('SELECT r.product_id, ROUND(AVG(r.score),2) as rating, COUNT(*) as count FROM RATING as r GROUP BY r.product_id;');
+    const [ratings] = await getPool().execute('SELECT r.code, r.seller_id, ROUND(AVG(r.score),2) as rating, COUNT(*) as count FROM RATING as r GROUP BY r.code, r.seller_id;');
     
-    // Convert ratings array to dictionary
+    // Convert ratings array to dictionary with composite key
     const ratingsMap = {};
     for (const rating of ratings) {
-      ratingsMap[rating.product_id] = {
+      const key = this.createSyntheticId(rating.seller_id, rating.code);
+      ratingsMap[key] = {
         score: rating.rating,
         count: rating.count
       };
     }
 
     for (const product of products) {
+      // Create synthetic ID
+      product.id = this.createSyntheticId(product.seller_id, product.code);
+      
       // Convert TINYINT to boolean
       product.isLimited = Boolean(product.isLimited);
       product.inStock = Boolean(product.inStock);
+      
       // Attach rating info
       if (ratingsMap[product.id]) {
         product.rate_score = ratingsMap[product.id].score;
@@ -181,14 +203,14 @@ class Product {
       }
     
       const [images] = await getPool().execute(
-        'SELECT image_url FROM IMAGE WHERE product_id = ? ORDER BY image_index',
-        [product.id]
+        'SELECT image_url FROM IMAGE WHERE code = ? AND seller_id = ? ORDER BY image_index',
+        [product.code, product.seller_id]
       );
       product.images = images.map(img => img.image_url);
       
       const [additionalInfo] = await getPool().execute(
-        'SELECT title, description FROM INFO WHERE product_id = ? ORDER BY info_index',
-        [product.id]
+        'SELECT title, description FROM INFO WHERE code = ? AND seller_id = ? ORDER BY info_index',
+        [product.code, product.seller_id]
       ); 
       product.additionalInfo = additionalInfo;
     }
@@ -198,6 +220,8 @@ class Product {
   
   // Update product
   static async update(id, data) {
+    const { sellerId, code } = this.parseSyntheticId(id);
+    
     const currentProduct = await this.findById(id);
     if (!currentProduct) {
       throw new Error('Product not found');
@@ -241,32 +265,32 @@ class Product {
       }
       
       if (updates.length > 0) {
-        values.push(id);
+        values.push(code, sellerId);
         await connection.execute(
-          `UPDATE PRODUCT SET ${updates.join(', ')} WHERE id = ?`,
+          `UPDATE PRODUCT SET ${updates.join(', ')} WHERE code = ? AND seller_id = ?`,
           values
         );
       }
       
       // Update images if provided
       if (data.images && Array.isArray(data.images)) {
-        await connection.execute('DELETE FROM IMAGE WHERE product_id = ?', [id]);
+        await connection.execute('DELETE FROM IMAGE WHERE code = ? AND seller_id = ?', [code, sellerId]);
         for (let i = 0; i < data.images.length; i++) {
           await connection.execute(
-            'INSERT INTO IMAGE (image_index, product_id, image_url) VALUES (?, ?, ?)',
-            [i, id, data.images[i]]
+            'INSERT INTO IMAGE (image_index, code, seller_id, image_url) VALUES (?, ?, ?, ?)',
+            [i, code, sellerId, data.images[i]]
           );
         }
       }
       
       // Update additional info if provided
       if (data.additionalInfo && Array.isArray(data.additionalInfo)) {
-        await connection.execute('DELETE FROM INFO WHERE product_id = ?', [id]);
+        await connection.execute('DELETE FROM INFO WHERE code = ? AND seller_id = ?', [code, sellerId]);
         let idx=0
         for (const info of data.additionalInfo) {
           await connection.execute(
-            'INSERT INTO INFO (info_index, product_id, title, description) VALUES (?, ?, ?, ?)',
-            [idx++, id, info.title || '', info.description || '']
+            'INSERT INTO INFO (info_index, code, seller_id, title, description) VALUES (?, ?, ?, ?, ?)',
+            [idx++, code, sellerId, info.title || '', info.description || '']
           );
         }
       }
@@ -283,7 +307,8 @@ class Product {
   
   // Delete product (cascade handled by foreign keys and trigger)
   static async delete(id) {
-    await getPool().execute('DELETE FROM PRODUCT WHERE id = ?', [id]);
+    const { sellerId, code } = this.parseSyntheticId(id);
+    await getPool().execute('DELETE FROM PRODUCT WHERE code = ? AND seller_id = ?', [code, sellerId]);
   }
 }
 

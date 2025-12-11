@@ -1,184 +1,149 @@
-# PastraBeez E-Commerce Platform 🐝
+# E-Commerce Platform
 
-A full-stack e-commerce application built with React, Node.js, Express, and MySQL.
+A full-stack e-commerce application built with React, Node.js, Express, and MySQL, featuring a honey-themed marketplace with seller and buyer functionality.
 
-## 🚀 Quick Start (One Command!)
+## Prerequisites
 
-### Prerequisites
-- **Docker Desktop** installed ([Download here](https://www.docker.com/products/docker-desktop))
-- That's it! No Node.js, MySQL, or XAMPP needed.
+Before running this project, you need to have Docker Desktop installed on your system.
 
-### Run the Entire Application
+**Download Docker Desktop:** [https://www.docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/)
 
-1. **Clone or extract the project:**
-   ```bash
-   cd e-commerce
-   ```
+- Download and install Docker Desktop for Windows
+- Make sure Docker Desktop is running before executing any commands
+- Verify installation by running `docker --version` in PowerShell
 
-2. **Start everything with one command:**
-   ```bash
-   docker-compose up --build
-   ```
+## Project Setup
 
-3. **Access the application:**
-   - **Frontend:** http://localhost:5173
-   - **Backend API:** http://localhost:3000
-   - **MySQL:** localhost:3306
+This project uses batch files to simplify Docker operations. All commands should be run from the project root directory.
 
-4. **Stop the application:**
-   ```
-   Press Ctrl+C in the terminal
-   ```
+### Available Commands
 
-5. **Clean up (remove containers and data):**
-   ```bash
-   docker-compose down -v
-   ```
+#### 1. **Setup (First Time Only)**
+```powershell
+.\setup.bat
+```
+**What it does:**
+- Builds all Docker images for the first time
+- Sets up the MySQL database, backend server, and frontend application
+- Run this command only once when you first clone the project
 
-## 📦 What Docker Does
+#### 2. **Start the Application**
+```powershell
+.\run.bat
+```
+**What it does:**
+- Starts all Docker containers in detached mode
+- Displays logs from all services (frontend, backend, MySQL)
+- Press `Ctrl+C` to stop viewing logs (containers continue running)
 
-Docker runs **3 containers** for you:
+**Access the application:**
+- Frontend: [http://localhost:5173](http://localhost:5173)
+- Backend API: [http://localhost:5000](http://localhost:5000)
 
-1. **MySQL Database** (Port 3306)
-   - Automatically creates the `mern_db` database
-   - Loads the schema from `backend/database/schema.sql`
-   - Loads sample data from `backend/database/sample.sql`
-   - Data persists between restarts
+#### 3. **Stop the Application**
+```powershell
+.\stop.bat
+```
+**What it does:**
+- Stops all running Docker containers
+- Preserves your data (database remains intact)
 
-2. **Backend API** (Port 3000)
-   - Node.js + Express server
-   - Connects to MySQL automatically
-   - Hot-reloads when you change code
+#### 4. **Reset Database**
+```powershell
+.\reset.bat
+```
+**What it does:**
+- Stops all containers
+- Removes all containers and volumes (deletes database data)
+- Rebuilds everything from scratch
+- Reinitializes the database with sample data
+- Use this when you want a fresh start or if the database gets corrupted
 
-3. **Frontend** (Port 5173)
-   - React + Vite application
-   - Connects to backend API automatically
-   - Hot-reloads when you change code
+## Typical Workflow
 
-## 🗄️ Database Explanation
-
-**Without Docker (old way):**
-- You need XAMPP installed
-- Manually start MySQL from XAMPP Control Panel
-- Manually create database
-- Manually import schema and data
-- Database is outside the project
-
-**With Docker (new way):**
-- MySQL runs inside a Docker container
-- Database is **part of the project**
-- `schema.sql` automatically creates tables on first run
-- `sample.sql` automatically loads test data on first run
-- No XAMPP needed!
-- Database data is saved in a Docker volume (persists between restarts)
-
-## 🛠️ Development Commands
-
-### View logs:
-```bash
-docker-compose logs -f
+### First Time Setup:
+```powershell
+# 1. Install Docker Desktop and ensure it's running
+# 2. Clone the project and navigate to the directory
+.\setup.bat
 ```
 
-### Rebuild containers (after changing dependencies):
-```bash
-docker-compose up --build
+### Daily Development:
+```powershell
+# Start the application
+.\run.bat
+
+# Work on your project...
+# Press Ctrl+C to stop viewing logs when done
+
+# Stop the application when finished
+.\stop.bat
 ```
 
-### Stop containers:
-```bash
-docker-compose down
+### When You Need a Fresh Database:
+```powershell
+.\reset.bat
 ```
 
-### Reset database (delete all data):
-```bash
-docker-compose down -v
-docker-compose up --build
+## Database Structure
+
+The project uses a composite primary key design for academic correctness (weak entity relationship):
+
+- **PRODUCT table**: Composite primary key `(code, seller_id)`
+- **IMAGE table**: References product with `(code, seller_id)`
+- **INFO table**: References product with `(code, seller_id)`
+- **RATING table**: Composite key `(code, seller_id, user_id)`
+
+The application layer uses synthetic IDs (format: `"sellerId-code"`) for simpler frontend code while maintaining the composite key structure in the database.
+
+## Sample Users
+
+After running `setup.bat` or `reset.bat`, the following users are available:
+
+**Admin User:**
+- Email: admin@email.com
+- Password: 123456
+
+**Seller Accounts:**
+- Golden Hive: goldenhive@email.com / 123456
+- Sweet Nectar: sweetnectar@email.com / 123456
+- Buzzing Artisans: buzzingartisans@email.com / 123456
+
+**Buyer Account:**
+- Email: buyer@email.com / 123456
+
+## Troubleshooting
+
+### Docker not found
+Make sure Docker Desktop is installed and running. Check with:
+```powershell
+docker --version
 ```
 
-### Run backend only:
-```bash
-docker-compose up backend
+### Port already in use
+If ports 3306, 5000, or 5173 are already in use, stop other applications using those ports or modify the port mappings in `docker-compose.yml`.
+
+### Database connection errors
+Run the reset script to reinitialize everything:
+```powershell
+.\reset.bat
 ```
 
-### Run MySQL only:
-```bash
-docker-compose up mysql
-```
+### Containers not starting
+Ensure Docker Desktop is running and has sufficient resources allocated (Settings → Resources).
 
-## 🏗️ Project Structure
+## Technology Stack
 
-```
-e-commerce/
-├── backend/
-│   ├── Dockerfile              # Backend container config
-│   ├── database/
-│   │   ├── schema.sql         # Database structure
-│   │   └── sample.sql         # Sample data
-│   ├── server.js
-│   └── ...
-├── frontend/
-│   ├── Dockerfile              # Frontend container config
-│   ├── src/
-│   └── ...
-├── docker-compose.yml          # Orchestrates all containers
-└── README.md                   # This file
-```
+- **Frontend**: React, Vite, TailwindCSS, React Query (TanStack Query)
+- **Backend**: Node.js, Express, MySQL2
+- **Database**: MySQL 8.0
+- **Containerization**: Docker & Docker Compose
+- **State Management**: Zustand
+- **Image Upload**: Cloudinary
 
-## 🎓 For Grading/Testing
+## Development Notes
 
-**To run the complete application:**
-1. Install Docker Desktop
-2. Open terminal in project root
-3. Run: `docker-compose up --build`
-4. Wait ~2 minutes for initial setup
-5. Open browser to http://localhost:5173
-
-**Sample accounts (from sample.sql):**
-- **Sellers:**
-  - Email: `golden.hive@beehive.com`, Password: (see sample data)
-  - Email: `nectar.farm@beehive.com`, Password: (see sample data)
-  
-- **Buyers:**
-  - Email: `honey.lover@beehive.com`, Password: (see sample data)
-
-## 🔧 Troubleshooting
-
-**Port 3306 already in use:**
-- Stop XAMPP MySQL
-- Or change port in `docker-compose.yml`: `"3307:3306"`
-
-**Port 5173 or 3000 already in use:**
-- Stop other applications using these ports
-- Or change ports in `docker-compose.yml`
-
-**Changes not appearing:**
-```bash
-docker-compose down
-docker-compose up --build
-```
-
-**Database not initializing:**
-```bash
-docker-compose down -v
-docker-compose up --build
-```
-
-## 📝 Notes
-
-- All changes to code are reflected immediately (hot reload)
-- Database data persists in Docker volume `mysql_data`
-- To reset everything: `docker-compose down -v && docker-compose up --build`
-- First startup takes longer (building images + loading data)
-
-## 🎉 Benefits of This Setup
-
-✅ **One-command setup** - No complex installation steps  
-✅ **No version conflicts** - Works the same on any machine  
-✅ **Includes everything** - Database, backend, frontend  
-✅ **Easy to grade** - No configuration needed  
-✅ **Professional** - Industry-standard deployment method  
-✅ **Portable** - Share the entire project easily  
-
----
-
-**Built with ❤️ using React, Node.js, Express, MySQL, and Docker**
+- Query logging is enabled in the backend to show actual SQL queries with parameter values
+- The admin panel (`/admin` route) shows raw database tables without synthetic ID abstraction
+- React Query handles cache invalidation for most CRUD operations
+- The admin panel refreshes data on every page navigation

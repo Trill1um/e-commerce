@@ -40,10 +40,9 @@ export const useAdminStore = create((set, get) => ({
     }
   },
 
-  // Set active table
+  // Set active table (without fetching)
   setActiveTable: (tableName) => {
     set({ activeTable: tableName });
-    get().fetchTableData(tableName);
   },
 
   // Clear error
