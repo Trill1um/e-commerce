@@ -475,3 +475,16 @@
     font-size: clamp(16px, 3vw, 18px);
   }
 }
+
+/* ========================================== */
+/* SKELETON LOADING ANIMATION */
+/* ========================================== */
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
