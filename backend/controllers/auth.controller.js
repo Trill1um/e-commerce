@@ -193,9 +193,9 @@ export const logout = async (req, res) => {
       await client.del(`refreshToken:${decoded.userId}`);
     }
 
-    // Clear cookies
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
+    // Clear cookies with same options used to set them
+    res.clearCookie("accessToken", cookieConfiguration);
+    res.clearCookie("refreshToken", cookieConfiguration);
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
     console.error("Error logging out:", error);
@@ -208,9 +208,9 @@ export const deleteAccount = async (req, res) => {
     const userId = req.user.id;
     await User.delete(userId);
 
-    // Clear cookies
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
+    // Clear cookies with same options used to set them
+    res.clearCookie("accessToken", cookieConfiguration);
+    res.clearCookie("refreshToken", cookieConfiguration);
     res.status(200).json({ message: "Account deleted successfully" });
   } catch (error) {
     console.error("Error deleting account:", error);
@@ -230,8 +230,8 @@ export const refreshToken = async (req, res) => {
     // Check if the refresh token exists in Redis
     const storedToken = await client.get(`refreshToken:${userId}`);
     if (storedToken !== refreshToken) {
-      res.clearCookie("accessToken");
-      res.clearCookie("refreshToken");
+      res.clearCookie("accessToken", cookieConfiguration);
+      res.clearCookie("refreshToken", cookieConfiguration);
       return res.status(403).json({ message: "Invalid refresh token" });
     }
 
