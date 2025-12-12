@@ -187,6 +187,7 @@ export const logout = async (req, res) => {
         refreshToken,
         process.env.REFRESH_TOKEN_SECRET
       );
+      console.log("Logging out user ID:", decoded.userId);
 
       // Remove refresh token from Redis
       await client.del(`refreshToken:${decoded.userId}`);

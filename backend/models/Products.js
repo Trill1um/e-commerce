@@ -138,35 +138,31 @@ class Product {
     p.updated_at, 
     u.colony_name as colonyName 
     FROM PRODUCT as p inner join USER as u on u.id=p.seller_id 
-    WHERE 1=1
-    `
+    WHERE 1=1`
     ;
     const params = [];
-    if (filters) {
-      // console.log("Filters in Product Model:", filters);
-    }
     if (filters?.sellerId) {
-      query += ' AND p.seller_id = ?';
+      query += '\nAND p.seller_id = ?';
       params.push(filters.sellerId);
       // console.log("Filtering by sellerId:", filters.sellerId);
     }
     if (filters?.category) {
-      query += ' AND p.category = ?';
+      query += '\nAND p.category = ?';
       params.push(filters.category);
     }
     
     if (filters?.isLimited !== undefined) {
-      query += ' AND p.is_limited = ?';
+      query += '\nAND p.is_limited = ?';
       params.push(filters.isLimited=="true"?1:0);
     }
     
     if (filters?.inStock !== undefined) {
-      query += ' AND p.in_stock = ?';
+      query += '\nAND p.in_stock = ?';
       params.push(filters.inStock=="true"?1:0);
     }
     
     if (filters?.searchTerm) {
-      query += ' AND p.name LIKE ?';
+      query += '\nAND p.name LIKE ?';
       params.push(`%${filters.searchTerm}%`);
     }
     
@@ -237,30 +233,30 @@ class Product {
       const values = [];
       
       if (data.name !== undefined) {
-        updates.push('name = ?');
+        updates.push('\nname = ?');
         values.push(data.name.trim());
       }
       if (data.description !== undefined) {
-        updates.push('description = ?');
+        updates.push('\ndescription = ?');
         values.push(data.description.trim());
       }
       if (data.price !== undefined) {
         if (data.price < 0) {
           throw new Error('Price cannot be negative');
         }
-        updates.push('price = ?');
+        updates.push('\nprice = ?');
         values.push(data.price);
       }
       if (data.category !== undefined) {
-        updates.push('category = ?');
+        updates.push('\ncategory = ?');
         values.push(data.category.trim());
       }
       if (data.isLimited !== undefined) {
-        updates.push('is_limited = ?');
+        updates.push('\nis_limited = ?');
         values.push(data.isLimited);
       }
       if (data.inStock !== undefined) {
-        updates.push('in_stock = ?');
+        updates.push('\nin_stock = ?');
         values.push(data.inStock);
       }
       
